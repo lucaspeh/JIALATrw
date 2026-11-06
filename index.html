@@ -28,7 +28,7 @@ textarea{min-height:70px}input:focus,select:focus,textarea:focus{outline:1px sol
 .arena small{font-weight:500;font-size:15px;margin-top:8px;opacity:.85}
 .big{font-size:54px;font-family:"Bauer Bodoni","Bodoni Moda",Didot,Georgia,serif}
 .tag{display:inline-block;font-size:11px;padding:2px 9px;border-radius:99px;border:1px solid var(--g3);color:var(--g1);letter-spacing:.06em}
-.live{font-size:13px;color:var(--mu);margin:0 0 6px}a{color:var(--g1)}
+.cf{position:fixed;top:-20px;width:8px;height:14px;background:linear-gradient(var(--g1),var(--g3));animation:fall linear infinite;pointer-events:none;z-index:5}@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}@media(prefers-reduced-motion:reduce){.cf{display:none}}.win{text-align:center;border-color:var(--g2);box-shadow:0 0 24px rgba(201,162,39,.25)}.cd{font-size:64px;line-height:1.1;font-family:"Bauer Bodoni","Bodoni Moda",Didot,Georgia,serif;color:var(--g1);margin:8px 0 2px}.rank.done{opacity:.45}.live{font-size:13px;color:var(--mu);margin:0 0 6px}a{color:var(--g1)}
 </style></head><body>
 <div id="app"></div>
 <script>
@@ -36,7 +36,7 @@ var LOGO="data:image/webp;base64,UklGRhgrAABXRUJQVlA4IAwrAACQqACdASoIAlABPj0ejES
 var G={tap:{n:"Tap Rush",d:"Tap as many times as you can in 10 seconds. Timer starts on your first tap.",hi:true,f:function(v){return v+" taps"}},
 react:{n:"Quick Draw",d:"Wait for the screen to turn green, then tap as fast as you can. Tapping early restarts the wait.",hi:false,f:function(v){return Math.round(v)+" ms"}},
 stop:{n:"Stop at 10.00",d:"A timer runs and then hides. Tap when you think exactly 10.00 seconds has passed. Closest wins.",hi:false,f:function(v){return v.toFixed(3)+"s off"}}};
-var S={names:null,sc:{tap:{},react:{},stop:{}}},A=document.getElementById("app"),tm=null,rz=false,code="",host=false,me=null,on=false,es=null,view="";
+var S={names:null,reveal:false,pick:null,sc:{tap:{},react:{},stop:{}}},A=document.getElementById("app"),tm=null,rz=false,code="",host=false,me=null,on=false,es=null,view="",skip=false,pt=null,DUR=[300,240,180,180,0];
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}return null}
 function pn(i){return S.names[i]}
@@ -45,8 +45,11 @@ function link(){return location.href.split("#")[0]+"#"+code}
 function apply(m){
  if(m.t=="cfg"&&m.names&&m.names.length==10)S.names=m.names;
  else if(m.t=="score"&&S.sc[m.g]&&typeof m.v=="number")S.sc[m.g][m.p]=m.v;
- else if(m.t=="reset")S.sc={tap:{},react:{},stop:{}};
- if(view=="home"||view=="wait"||view=="who")render()}
+ else if(m.t=="reset"){S.sc={tap:{},react:{},stop:{}};S.reveal=false;S.pick=null}
+ else if(m.t=="pick"&&m.order&&m.order.length==5)S.pick={order:m.order,i:m.i,rem:m.rem,paused:!!m.paused,at:m.at||Date.now()};
+ else if(m.t=="pickend")S.pick=null;
+ else if(m.t=="reveal"){S.reveal=!!m.on;skip=false}
+ if(view=="home"||view=="wait"||view=="who"||view=="final"||view=="picking")render()}
 function send(m){
  if(!on)apply(m);
  try{fetch(BASE+"rw-"+code,{method:"POST",body:JSON.stringify(m)}).catch(function(){})}catch(e){}}
@@ -55,7 +58,7 @@ function connect(){
  es=new EventSource(BASE+"rw-"+code+"/sse?since=all");
  es.onopen=function(){on=true;stat()};
  es.onerror=function(){on=false;stat()};
- es.addEventListener("message",function(e){try{var d=JSON.parse(e.data);if(d.event=="message")apply(JSON.parse(d.message))}catch(x){}})}
+ es.addEventListener("message",function(e){try{var d=JSON.parse(e.data);if(d.event=="message")var m=JSON.parse(d.message),st=d.time*1000,nw=Date.now();m.at=Math.abs(nw-st)<8000?nw:st;apply(m)}catch(x){}})}
 function stat(){var e=document.getElementById("stat");if(e)e.innerHTML=on?"🟢 Live":"🔴 Reconnecting…"}
 function render(){clearTimeout(tm);clearInterval(tm);
  if(!code)return setup();
@@ -81,6 +84,8 @@ function pts(){var p=[];for(var i=0;i<10;i++)p.push(0);
   ids.forEach(function(id){var v=S.sc[g][id],r=1;ids.forEach(function(o){var w=S.sc[g][o];if(G[g].hi?w>v:w<v)r++});p[id]+=Math.max(0,11-r)})}
  return p}
 function home(){
+ if(S.pick)return picking();
+ if(S.reveal&&!skip)return final();
  view="home";var p=pts(),cs=[],med=["🥇","🥈","🥉","4️⃣","5️⃣"],ord=["1st","2nd","3rd","4th","5th"],played=0;
  for(var g in G)played+=Object.keys(S.sc[g]).length;
  for(var c=0;c<5;c++)cs.push({c:c,t:p[c*2]+p[c*2+1],m:Math.max(p[c*2],p[c*2+1])});
@@ -97,16 +102,49 @@ function home(){
   var ids=Object.keys(S.sc[g]).sort(function(a,b){return G[g].hi?S.sc[g][b]-S.sc[g][a]:S.sc[g][a]-S.sc[g][b]});
   h+=ids.length?ids.map(function(i){return esc(pn(i))+" "+G[g].f(S.sc[g][i])}).join(" · "):"No scores yet";h+='</div>'}
  h+='</div>';
- if(host){h+='<h2>Host tools</h2><div class="card"><b>Invite link</b><input id="lk" readonly value="'+esc(link())+'"><button id="sh">Share invite link</button></div><div class="card"><b>Add or fix a score</b><select id="mg">'+Object.keys(G).map(function(g){return'<option value="'+g+'">'+G[g].n+'</option>'}).join("")+'</select><select id="mp">'+S.names.map(function(n,i){return'<option value="'+i+'">'+esc(n)+'</option>'}).join("")+'</select><input id="mv" type="number" step="any" inputmode="decimal" placeholder="Taps, ms, or seconds off"><button id="ma" class="alt">Save score</button></div><div class="card"><b>Paste backup codes</b><div class="sub" style="margin:2px 0">One per line, like tap|3|62</div><textarea id="bc"></textarea><button id="bb" class="alt">Add codes</button></div><button class="alt" id="en">Edit names</button><button class="alt" id="rs">Reset all scores</button>'}
+ if(host){h+='<h2>Host tools</h2><div class="card"><b>Invite link</b><input id="lk" readonly value="'+esc(link())+'"><button id="sh">Share invite link</button></div><div class="card"><b>Add or fix a score</b><select id="mg">'+Object.keys(G).map(function(g){return'<option value="'+g+'">'+G[g].n+'</option>'}).join("")+'</select><select id="mp">'+S.names.map(function(n,i){return'<option value="'+i+'">'+esc(n)+'</option>'}).join("")+'</select><input id="mv" type="number" step="any" inputmode="decimal" placeholder="Taps, ms, or seconds off"><button id="ma" class="alt">Save score</button></div><div class="card"><b>Paste backup codes</b><div class="sub" style="margin:2px 0">One per line, like tap|3|62</div><textarea id="bc"></textarea><button id="bb" class="alt">Add codes</button></div><button id="sp">▶ Start room picking</button><button id="rv">🏆 Reveal winners to everyone</button><button class="alt" id="en">Edit names</button><button class="alt" id="rs">Reset all scores</button>'}
  A.innerHTML=h;stat();
  Array.prototype.forEach.call(A.querySelectorAll("button[data-g]"),function(b){b.onclick=function(){run(b.dataset.g)}});
  document.getElementById("chg").onclick=function(e){e.preventDefault();me=null;render()};
  if(!host)return;
  document.getElementById("sh").onclick=function(){var l=link();if(navigator.share)navigator.share({title:"Room Wars",url:l}).catch(function(){});else{document.getElementById("lk").select();try{navigator.clipboard.writeText(l)}catch(e){}}};
+ document.getElementById("sp").onclick=function(){send({t:"pick",order:order(),i:0,rem:DUR[0]*1000,paused:false})};
+ document.getElementById("rv").onclick=function(){send({t:"reveal",on:true})};
  document.getElementById("en").onclick=setup;
  document.getElementById("ma").onclick=function(){var v=parseFloat(document.getElementById("mv").value);if(isNaN(v))return;send({t:"score",g:document.getElementById("mg").value,p:+document.getElementById("mp").value,v:v})};
  document.getElementById("bb").onclick=function(){document.getElementById("bc").value.split("\n").forEach(function(l){var a=l.trim().split("|"),v=parseFloat(a[2]);if(G[a[0]]&&a[1]>=0&&a[1]<10&&!isNaN(v))send({t:"score",g:a[0],p:+a[1],v:v})});document.getElementById("bc").value=""};
  var r=document.getElementById("rs");r.onclick=function(){if(rz){rz=false;send({t:"reset"})}else{rz=true;r.textContent="Tap again to erase all scores";setTimeout(function(){rz=false;if(r.isConnected)r.textContent="Reset all scores"},3000)}}}
+function final(){view="final";var p=pts(),cs=[],ord=["1st","2nd","3rd","4th","5th"];
+ for(var c=0;c<5;c++)cs.push({c:c,t:p[c*2]+p[c*2+1],m:Math.max(p[c*2],p[c*2+1])});
+ cs.sort(function(x,y){return y.t-x.t||y.m-x.m});
+ var w=cs[0],tie=cs[1].t==w.t&&cs[1].m==w.m;
+ var h='<div class="brand"><img src="'+LOGO+'" alt="JIALAT"><h1>Congratulations!</h1></div><div class="card win"><div class="sub">'+(tie?'Tied at the top':'Winning pair')+'</div><div class="big" style="font-size:30px;line-height:1.2">'+esc(cn(w.c))+'</div><div class="sub" style="margin:8px 0 0">'+w.t+' points'+(tie?' · settle it with rock-paper-scissors!':' · picks their room first')+'</div></div><h2>Room pick order</h2>';
+ cs.forEach(function(x,i){h+='<div class="rank'+(i==0?' first':'')+'"><div class="n">'+(i+1)+'</div><div class="g"><b>'+esc(cn(x.c))+'</b><small>'+ord[i]+' pick</small></div><div class="pts">'+x.t+'</div></div>'});
+ h+='<button class="alt" id="sb">View full scoreboard</button>'+(host?'<button class="alt" id="hd">Hide results for everyone</button>':'');
+ for(var i=0;i<28;i++){var r=Math.random();h+='<i class="cf" style="left:'+(r*100)+'%;animation-delay:'+(Math.random()*3)+'s;animation-duration:'+(3+Math.random()*2.5)+'s"></i>'}
+ A.innerHTML=h;
+ document.getElementById("sb").onclick=function(){skip=true;home()};
+ var hd=document.getElementById("hd");if(hd)hd.onclick=function(){send({t:"reveal",on:false})}}
+function order(){var p=pts(),cs=[];
+ for(var c=0;c<5;c++)cs.push({c:c,t:p[c*2]+p[c*2+1],m:Math.max(p[c*2],p[c*2+1])});
+ cs.sort(function(x,y){return y.t-x.t||y.m-x.m});return cs.map(function(x){return x.c})}
+function left(){var k=S.pick;if(!k)return 0;return k.paused?k.rem:Math.max(0,k.rem-(Date.now()-k.at))}
+function fmt(ms){var t=Math.ceil(ms/1000);return Math.floor(t/60)+":"+("0"+t%60).slice(-2)}
+function pk(o){send({t:"pick",order:S.pick.order,i:o.i,rem:o.rem,paused:!!o.paused})}
+function tick(){var k=S.pick,e=document.getElementById("cd");if(!k||!e){clearInterval(pt);return}
+ var l=left();e.textContent=fmt(l);e.style.color=l<30000?"#f08a7a":"";
+ document.getElementById("cs").textContent=k.paused?"⏸ Paused":(l<=0?"Time’s up!":"")}
+function picking(){view="picking";var k=S.pick,c=k.order[k.i],nx=k.order[k.i+1],last=k.i==4,ord=["1st","2nd","3rd","4th","5th"];
+ var h='<div class="brand"><img src="'+LOGO+'" alt="JIALAT"><h1>Room Picking</h1></div><div class="card win"><div class="sub">'+ord[k.i]+' pick · now choosing</div><div class="big" style="font-size:30px;line-height:1.2">'+esc(cn(c))+'</div>'+(last?'<div class="sub" style="margin:10px 0 0">No timer. This pair takes the last room.</div>':'<div class="cd" id="cd"></div><div class="sub" id="cs" style="margin:0;min-height:20px"></div>')+(nx!==undefined?'<div class="sub" style="margin:10px 0 0">Up next: <b>'+esc(cn(nx))+'</b></div>':'')+'</div><p class="sub" style="text-align:center;margin:0 0 4px">Everyone can look around the whole building. Only the pair above chooses now.</p><h2>Pick order</h2>';
+ k.order.forEach(function(x,i){h+='<div class="rank'+(i==k.i?' first':'')+(i<k.i?' done':'')+'"><div class="n">'+(i<k.i?'✓':i+1)+'</div><div class="g"><b>'+esc(cn(x))+'</b><small>'+ord[i]+' pick'+(i==4?' · last room':'')+'</small></div></div>'});
+ if(host)h+=(last?'':'<button id="pn">Next pair →</button><button id="pp" class="alt">'+(k.paused?'▶ Resume':'⏸ Pause')+'</button><button id="pm" class="alt">+1 minute</button>')+'<button class="alt" id="pe">'+(last?'Finish picking':'End picking')+'</button>';
+ A.innerHTML=h;
+ if(host){var g=function(id,f){var e=document.getElementById(id);if(e)e.onclick=f};
+  g("pn",function(){pk({i:k.i+1,rem:DUR[k.i+1]*1000})});
+  g("pp",function(){pk({i:k.i,rem:left(),paused:!k.paused})});
+  g("pm",function(){pk({i:k.i,rem:left()+60000,paused:k.paused})});
+  g("pe",function(){send({t:"pickend"})})}
+ clearInterval(pt);if(!last){tick();pt=setInterval(tick,250)}}
 function fin(g,v){
  send({t:"score",g:g,p:me,v:v});view="fin";
  A.innerHTML='<h1>'+esc(pn(me))+'</h1><div class="arena" style="background:var(--card);color:var(--tx);border:1px solid var(--bd)"><div class="big">'+G[g].f(v)+'</div></div><p class="sub" style="margin-top:10px">Backup code (only needed if the host says so): <b>'+g+'|'+me+'|'+(Math.round(v*1000)/1000)+'</b></p><button id="nx">See standings</button>';
