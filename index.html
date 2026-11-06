@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Room Wars</title>
+<style>
+:root{--bg:#fff7ed;--card:#fff;--tx:#1f2937;--mu:#6b7280;--ac:#ea580c;--ac2:#fed7aa;--bd:#e5e7eb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1410;--card:#2a1f18;--tx:#f5f5f4;--mu:#a8a29e;--ac:#fb923c;--ac2:#5a3418;--bd:#3f3128;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1c1410;--card:#2a1f18;--tx:#f5f5f4;--mu:#a8a29e;--ac:#fb923c;--ac2:#5a3418;--bd:#3f3128;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:16px;max-width:520px;margin:0 auto}
+h1{font-size:24px;margin:4px 0 2px}h2{font-size:17px;margin:18px 0 8px}
+.sub{color:var(--mu);font-size:14px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px}
+button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:13px 16px;background:var(--ac);color:#fff;width:100%;margin-top:8px;cursor:pointer}
+button.alt{background:var(--ac2);color:var(--tx)}button:disabled{opacity:.45}
+input{font:inherit;width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);margin-top:6px}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.rank{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--bd);margin-bottom:8px}
+.rank.first{border-color:var(--ac);background:var(--ac2)}
+.n{font-size:22px;width:34px;text-align:center}.g{flex:1}.g b{display:block}.g small{color:var(--mu)}
+.pts{font-weight:700;font-size:18px;text-align:right}.pts small{display:block;font-weight:400;color:var(--mu);font-size:12px}
+.arena{height:46vh;min-height:260px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:700;font-size:26px;user-select:none;-webkit-user-select:none;touch-action:manipulation;background:var(--ac);color:#fff;padding:16px}
+.arena small{font-weight:400;font-size:15px;margin-top:8px;opacity:.9}
+.big{font-size:54px}.done{color:var(--mu);text-decoration:line-through}
+select{font:inherit;width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);margin-top:6px}.live{font-size:13px;color:var(--mu);margin:0 0 6px}textarea{font:inherit;width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);margin-top:6px;min-height:70px}.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--ac2)}
+</style></head><body>
+<div id="app"></div>
+<script>
+var BAD=1e9,BASE="https://ntfy.sh/";
+var G={tap:{n:"Tap Rush",d:"Tap as many times as you can in 10 seconds. Timer starts on your first tap.",hi:true,f:function(v){return v+" taps"}},
+react:{n:"Quick Draw",d:"Wait for the screen to turn green, then tap as fast as you can. Tapping early restarts the wait.",hi:false,f:function(v){return Math.round(v)+" ms"}},
+stop:{n:"Stop at 5.00",d:"A timer runs and then hides. Tap when you think exactly 5.00 seconds has passed. Closest wins.",hi:false,f:function(v){return v.toFixed(3)+"s off"}}};
+var S={names:null,sc:{tap:{},react:{},stop:{}}},A=document.getElementById("app"),tm=null,rz=false,code="",host=false,me=null,on=false,es=null,view="";
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}return null}
+function pn(i){return S.names[i]}
+function cn(c){return pn(c*2)+" & "+pn(c*2+1)}
+function link(){return location.href.split("#")[0]+"#"+code}
+function apply(m){
+ if(m.t=="cfg"&&m.names&&m.names.length==10)S.names=m.names;
+ else if(m.t=="score"&&S.sc[m.g]&&typeof m.v=="number")S.sc[m.g][m.p]=m.v;
+ else if(m.t=="reset")S.sc={tap:{},react:{},stop:{}};
+ if(view=="home"||view=="wait"||view=="who")render()}
+function send(m){
+ if(!on)apply(m);
+ try{fetch(BASE+"rw-"+code,{method:"POST",body:JSON.stringify(m)}).catch(function(){})}catch(e){}}
+function connect(){
+ if(es)es.close();
+ es=new EventSource(BASE+"rw-"+code+"/sse?since=all");
+ es.onopen=function(){on=true;stat()};
+ es.onerror=function(){on=false;stat()};
+ es.addEventListener("message",function(e){try{var d=JSON.parse(e.data);if(d.event=="message")apply(JSON.parse(d.message))}catch(x){}})}
+function stat(){var e=document.getElementById("stat");if(e)e.innerHTML=on?"🟢 Live":"🔴 Reconnecting…"}
+function render(){clearTimeout(tm);clearInterval(tm);
+ if(!code)return setup();
+ if(!S.names)return wait();
+ if(me==null)return who();
+ home()}
+function wait(){view="wait";A.innerHTML='<p class="live" id="stat"></p><h1>🏠 Room Wars</h1><div class="card">Connecting to the game… waiting for the host’s names.</div>';stat()}
+function setup(){view="setup";
+ var h='<h1>🏠 Room Wars</h1><p class="sub">'+(code?'Edit the names.':'Host: enter the 5 couples. Then share the invite link with everyone.')+'</p>';
+ for(var c=0;c<5;c++)h+='<div class="card"><b>Couple '+(c+1)+'</b><div class="row"><input id="p'+(c*2)+'" placeholder="Person A" maxlength="14" value="'+(S.names?esc(S.names[c*2]):"")+'"><input id="p'+(c*2+1)+'" placeholder="Person B" maxlength="14" value="'+(S.names?esc(S.names[c*2+1]):"")+'"></div></div>';
+ h+='<button id="go">'+(code?'Save names':'Create game')+'</button>'+(code?'<button class="alt" id="bk">Cancel</button>':'');
+ A.innerHTML=h;var b=document.getElementById("bk");if(b)b.onclick=render;
+ document.getElementById("go").onclick=function(){
+  var nm=[];for(var i=0;i<10;i++){var v=document.getElementById("p"+i).value.trim();nm.push(v||("Player "+(i+1)))}
+  if(!code){var al="abcdefghjkmnpqrstuvwxyz23456789";for(var i=0;i<8;i++)code+=al[Math.floor(Math.random()*al.length)];
+   host=true;ls("rwh-"+code,"1");location.hash=code;connect()}
+  send({t:"cfg",names:nm});render()}}
+function who(){view="who";var h='<h1>Who are you?</h1><p class="sub">Tap your name.</p>';
+ for(var i=0;i<10;i++)h+='<button class="alt" data-i="'+i+'">'+esc(pn(i))+'</button>';A.innerHTML=h;
+ Array.prototype.forEach.call(A.querySelectorAll("button"),function(b){b.onclick=function(){me=+b.dataset.i;ls("rwm-"+code,me);render()}})}
+function pts(){var p=[];for(var i=0;i<10;i++)p.push(0);
+ for(var g in G){var ids=Object.keys(S.sc[g]);
+  ids.forEach(function(id){var v=S.sc[g][id],r=1;ids.forEach(function(o){var w=S.sc[g][o];if(G[g].hi?w>v:w<v)r++});p[id]+=Math.max(0,11-r)})}
+ return p}
+function home(){
+ view="home";var p=pts(),cs=[],med=["🥇","🥈","🥉","4️⃣","5️⃣"],ord=["1st","2nd","3rd","4th","5th"],played=0;
+ for(var g in G)played+=Object.keys(S.sc[g]).length;
+ for(var c=0;c<5;c++)cs.push({c:c,t:p[c*2]+p[c*2+1],m:Math.max(p[c*2],p[c*2+1])});
+ cs.sort(function(x,y){return y.t-x.t||y.m-x.m});
+ var h='<p class="live"><span id="stat"></span> · You: <b>'+esc(pn(me))+'</b> <a href="#" id="chg">change</a></p><h1>🏆 Room Wars</h1><p class="sub">1st place in each game = 10 pts, 2nd = 9, and so on. Couple score = both partners added.</p><h2>Couple standings</h2>';
+ cs.forEach(function(x,i){h+='<div class="rank'+(i==0&&played?' first':'')+'"><div class="n">'+med[i]+'</div><div class="g"><b>'+esc(cn(x.c))+'</b><small>'+esc(pn(x.c*2))+' '+p[x.c*2]+' · '+esc(pn(x.c*2+1))+' '+p[x.c*2+1]+'</small></div><div class="pts">'+x.t+'<small>'+ord[i]+' room pick</small></div></div>'});
+ var tie=false;for(var i=1;i<5;i++)if(cs[i].t==cs[i-1].t&&cs[i].m==cs[i-1].m)tie=true;
+ if(played&&tie)h+='<p class="sub">Some couples are tied. Settle it with rock-paper-scissors!</p>';
+ h+='<h2>Games</h2>';
+ for(var g in G){var n=Object.keys(S.sc[g]).length,mine=S.sc[g][me]!==undefined;
+  h+='<div class="card"><b>'+G[g].n+'</b> <span class="tag">'+n+'/10 played</span><div class="sub" style="margin:4px 0 0">'+G[g].d+'</div><button data-g="'+g+'"'+(mine?' disabled':'')+'>'+(mine?'You played ✓':'Play')+'</button></div>'}
+ h+='<h2>Individual scores</h2><div class="card">';
+ for(var g in G){h+='<b>'+G[g].n+'</b><div class="sub">';
+  var ids=Object.keys(S.sc[g]).sort(function(a,b){return G[g].hi?S.sc[g][b]-S.sc[g][a]:S.sc[g][a]-S.sc[g][b]});
+  h+=ids.length?ids.map(function(i){return esc(pn(i))+" "+G[g].f(S.sc[g][i])}).join(" · "):"No scores yet";h+='</div>'}
+ h+='</div>';
+ if(host){h+='<h2>Host tools</h2><div class="card"><b>Invite link</b><input id="lk" readonly value="'+esc(link())+'"><button id="sh">Share invite link</button></div><div class="card"><b>Add or fix a score</b><select id="mg">'+Object.keys(G).map(function(g){return'<option value="'+g+'">'+G[g].n+'</option>'}).join("")+'</select><select id="mp">'+S.names.map(function(n,i){return'<option value="'+i+'">'+esc(n)+'</option>'}).join("")+'</select><input id="mv" type="number" step="any" inputmode="decimal" placeholder="Taps, ms, or seconds off"><button id="ma" class="alt">Save score</button></div><div class="card"><b>Paste backup codes</b><div class="sub" style="margin:2px 0">One per line, like tap|3|62</div><textarea id="bc"></textarea><button id="bb" class="alt">Add codes</button></div><button class="alt" id="en">Edit names</button><button class="alt" id="rs">Reset all scores</button>'}
+ A.innerHTML=h;stat();
+ Array.prototype.forEach.call(A.querySelectorAll("button[data-g]"),function(b){b.onclick=function(){run(b.dataset.g)}});
+ document.getElementById("chg").onclick=function(e){e.preventDefault();me=null;render()};
+ if(!host)return;
+ document.getElementById("sh").onclick=function(){var l=link();if(navigator.share)navigator.share({title:"Room Wars",url:l}).catch(function(){});else{document.getElementById("lk").select();try{navigator.clipboard.writeText(l)}catch(e){}}};
+ document.getElementById("en").onclick=setup;
+ document.getElementById("ma").onclick=function(){var v=parseFloat(document.getElementById("mv").value);if(isNaN(v))return;send({t:"score",g:document.getElementById("mg").value,p:+document.getElementById("mp").value,v:v})};
+ document.getElementById("bb").onclick=function(){document.getElementById("bc").value.split("\n").forEach(function(l){var a=l.trim().split("|"),v=parseFloat(a[2]);if(G[a[0]]&&a[1]>=0&&a[1]<10&&!isNaN(v))send({t:"score",g:a[0],p:+a[1],v:v})});document.getElementById("bc").value=""};
+ var r=document.getElementById("rs");r.onclick=function(){if(rz){rz=false;send({t:"reset"})}else{rz=true;r.textContent="Tap again to erase all scores";setTimeout(function(){rz=false;if(r.isConnected)r.textContent="Reset all scores"},3000)}}}
+function fin(g,v){
+ send({t:"score",g:g,p:me,v:v});view="fin";
+ A.innerHTML='<h1>'+esc(pn(me))+'</h1><div class="arena" style="background:var(--card);color:var(--tx);border:1px solid var(--bd)"><div class="big">'+G[g].f(v)+'</div></div><p class="sub" style="margin-top:10px">Backup code (only needed if the host says so): <b>'+g+'|'+me+'|'+(Math.round(v*1000)/1000)+'</b></p><button id="nx">See standings</button>';
+ document.getElementById("nx").onclick=home}
+function run(g){view="play";
+ A.innerHTML='<h1>'+G[g].n+'</h1><p class="sub">'+G[g].d+'</p><div class="card" style="text-align:center"><div class="sub">Playing as</div><div style="font-size:30px;font-weight:700">'+esc(pn(me))+'</div></div><button id="st">I’m ready!</button><button class="alt" id="bk">Back</button>';
+ document.getElementById("st").onclick=function(){g=="tap"?tapG(g):g=="react"?reactG(g):stopG(g)};
+ document.getElementById("bk").onclick=home}
+function tapG(g){
+ var n=0,t0=0,over=false;
+ A.innerHTML='<div class="arena" id="ar"><div class="big" id="c">0</div><small id="tl">Tap to start!</small></div>';
+ document.getElementById("ar").onpointerdown=function(e){e.preventDefault();if(over)return;
+  if(!t0){t0=Date.now();tm=setInterval(function(){var l=10-(Date.now()-t0)/1000;
+   if(l<=0){clearInterval(tm);over=true;fin(g,n)}else document.getElementById("tl").textContent=l.toFixed(1)+"s left"},50)}
+  n++;document.getElementById("c").textContent=n}}
+function reactG(g){
+ var ar,go=false,t0=0;
+ A.innerHTML='<div class="arena" id="ar" style="background:#dc2626"><span id="m">Wait for green…</span></div>';
+ ar=document.getElementById("ar");
+ function arm(){go=false;ar.style.background="#dc2626";document.getElementById("m").textContent="Wait for green…";
+  tm=setTimeout(function(){go=true;t0=performance.now();ar.style.background="#16a34a";document.getElementById("m").textContent="TAP NOW!"},2000+Math.random()*3500)}
+ ar.onpointerdown=function(e){e.preventDefault();
+  if(go){go=false;fin(g,performance.now()-t0)}
+  else{clearTimeout(tm);document.getElementById("m").innerHTML='Too early!<small>Wait again…</small>';tm=setTimeout(arm,900)}};
+ arm()}
+function stopG(g){
+ var t0=Date.now();
+ A.innerHTML='<div class="arena" id="ar"><div class="big" id="c">0.00</div><small>Tap when you hit 5.00 seconds</small></div>';
+ var c=document.getElementById("c");
+ tm=setInterval(function(){var s=(Date.now()-t0)/1000;if(s>=2)c.textContent="?";else c.textContent=s.toFixed(2)},30);
+ document.getElementById("ar").onpointerdown=function(e){e.preventDefault();clearInterval(tm);fin(g,Math.abs((Date.now()-t0)/1000-5))}}
+code=location.hash.slice(1).replace(/[^a-z0-9]/gi,"").toLowerCase();
+if(code){host=ls("rwh-"+code)=="1";var m=ls("rwm-"+code);me=m===null?null:+m;try{connect()}catch(e){}}
+render();
+</script></body></html>
