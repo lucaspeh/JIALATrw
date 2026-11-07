@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Scoreboard</title>
 <style>
-:root{--bg:#0a0a0a;--g:#d4af37;--l:#f3d77a;--d:#6b5a22;--t:#f2ead3}
+:root{--bg:#0a0a0a;--g:#d4af37;--l:#f3d77a;--d:#6b5a22;--t:#f2ead3;--muted:#b9b6a8;--ice:#86baff;--teal:#65d9cb;--coral:#ff8b78}
 *{box-sizing:border-box;margin:0}
 body{background:var(--bg);color:var(--t);font:700 15px/1.45 "Courier New",ui-monospace,monospace;letter-spacing:.04em;min-height:100vh}
 button{font:inherit;color:var(--t);background:#161616;border:3px solid var(--d);padding:10px 12px;box-shadow:3px 3px 0 #000;cursor:pointer;text-transform:uppercase;letter-spacing:.04em}
@@ -30,10 +30,13 @@ body.landing .dot{display:none}
 .host-icon svg{animation:tally-tick 1.2s steps(2) infinite;transform-origin:bottom left}
 @keyframes tally-tick{50%{transform:rotate(-10deg)}}
 @media(prefers-reduced-motion:reduce){.bead-one,.bead-two,.bead-three,.host-icon svg{animation:none}}
+.soundbar{display:flex;align-items:center;gap:8px;margin:7px 0 12px}
+.soundbar button{padding:7px 10px;font-size:12px}
+.soundbar button.sound-on{border-color:var(--teal);color:var(--teal)}
 /* host */
 #H{max-width:860px;margin:auto;padding:14px}
 .hd{display:flex;justify-content:space-between;color:var(--g);font-size:17px;margin-bottom:10px}
-.lb{color:var(--d);font-size:12px;margin:12px 0 6px}.sm{color:var(--d);font-size:12px}
+.lb{color:var(--muted);font-size:12px;margin:12px 0 6px}.sm{color:var(--muted);font-size:12px}
 .rw,.gd,.tabs{display:flex;flex-wrap:wrap;gap:8px}
 .gd button{flex:1 1 30%}.tabs button{flex:1;padding:10px 0}
 .card{border:3px solid var(--g);padding:14px;margin-top:12px;box-shadow:5px 5px 0 #000,5px 5px 0 1px var(--d)}
@@ -42,7 +45,7 @@ body.landing .dot{display:none}
 details{margin-top:14px}summary{cursor:pointer;color:var(--g)}
 .nr{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin-top:6px}
 .nr button{padding:6px 12px}
-.clock{font-size:clamp(30px,8vw,58px);color:var(--l);font-variant-numeric:tabular-nums;margin:8px 0}
+.clock{font-size:clamp(30px,8vw,58px);color:var(--teal);font-variant-numeric:tabular-nums;margin:8px 0}
 .turn{border:2px solid var(--d);padding:12px;margin:10px 0;background:#111}
 .turn .rw button{flex:1 1 190px;min-height:58px}
 .results{display:grid;gap:7px;margin-top:10px}
@@ -51,11 +54,56 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--g)}
 .result b{min-width:52px;text-align:right;color:var(--l)}
 .result .who{overflow-wrap:anywhere}
 .hint{color:#cfc6a8;font-size:12px;font-weight:400;margin-top:8px}
-.warn{color:#f3d77a;margin-top:8px}
+.warn{color:var(--coral);margin-top:8px}
 @media(max-width:440px){.result{grid-template-columns:minmax(0,1fr) 100px auto}.result b{min-width:34px}}
+.hostcheck{font-weight:400;color:#cfc6a8;padding:4px 0 8px}
 /* tv */
 #T{height:100vh;padding:3vh 4vw;text-align:center}
 #msg{height:100%;flex-direction:column;align-items:center;justify-content:center;gap:2.4vh}
+#msg.rules{gap:1.3vh;padding:1vh 0}
+#msg.rules h1{font-size:clamp(28px,6vh,76px);line-height:1.05}
+.guideGoal{font-size:clamp(18px,3vh,38px);color:#fff;font-weight:400;max-width:90vw}
+.guideSteps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1vw;width:92vw;text-align:left}
+.guideStep{border:.4vh solid var(--d);background:#111;padding:1.2vh 1vw;font-size:clamp(15px,2.3vh,30px);line-height:1.25;min-height:12vh}
+.guideStep b{color:var(--ice);display:block;font-size:2vh;margin-bottom:.6vh}
+.guideFacts{display:flex;gap:1vw;width:92vw}
+.guideFact{flex:1;min-width:0;border:.4vh solid var(--g);padding:.7vh 1vw;font-size:clamp(15px,2.4vh,31px);line-height:1.2}
+.guideFact:nth-child(2){border-color:var(--teal)}
+.guideFact b{color:var(--g);display:block;font-size:1.8vh;letter-spacing:.12em;margin-bottom:.3vh}
+.gameScene{height:15vh;min-height:105px;display:flex;align-items:center;justify-content:center}
+.gameScene svg{width:min(46vw,460px);height:100%;overflow:visible;shape-rendering:crispEdges}
+.scene-1 .snowball{animation:snowdrop 3.5s steps(5) infinite}
+.scene-1 .snowball:nth-of-type(2){animation-delay:.25s}.scene-1 .snowball:nth-of-type(3){animation-delay:.5s}
+.scene-1 .snowball:nth-of-type(4){animation-delay:.75s}.scene-1 .snowball:nth-of-type(5){animation-delay:1s}
+@keyframes snowdrop{0%,20%{transform:none;opacity:1}60%,80%{transform:translate(16px,30px);opacity:0}100%{transform:none;opacity:1}}
+.scene-2 .plate{transform-origin:65px 58px;animation:fanplate 1.2s steps(3) infinite alternate}
+.scene-2 .wind{animation:wind 1.2s steps(4) infinite}
+.scene-2 .flame{animation:flicker 2.4s steps(2) infinite}
+@keyframes fanplate{to{transform:rotate(26deg)}}@keyframes wind{0%{transform:translateX(0);opacity:0}30%{opacity:1}100%{transform:translateX(75px);opacity:0}}@keyframes flicker{50%{transform:scale(.65);opacity:.5}}
+.scene-3 .cane{animation:dropcane 2.8s steps(5) infinite}
+@keyframes dropcane{0%,15%{transform:none}60%,78%{transform:translateY(45px)}100%{transform:none}}
+.scene-4 .flame{animation:flameout 4s steps(1) infinite}
+.scene-4 .flame:nth-of-type(2){animation-delay:.15s}.scene-4 .flame:nth-of-type(3){animation-delay:.3s}.scene-4 .flame:nth-of-type(4){animation-delay:.45s}
+.scene-4 .flame:nth-of-type(5){animation-delay:.6s}.scene-4 .flame:nth-of-type(6){animation-delay:.75s}.scene-4 .flame:nth-of-type(7){animation-delay:.9s}.scene-4 .flame:nth-of-type(8){animation-delay:1.05s}
+@keyframes flameout{0%,38%{opacity:1;transform:none}40%,80%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+.scene-5 .tree{animation:reach 3.4s steps(6) infinite}
+@keyframes reach{0%,15%{transform:none}65%,82%{transform:translateX(116px)}100%{transform:none}}
+.scene-6 .ribbon{stroke-dasharray:190;animation:unspool 3s steps(8) infinite}
+.scene-6 .roll{transform-origin:65px 57px;animation:roll 3s steps(8) infinite}
+@keyframes unspool{0%,15%{stroke-dashoffset:190}75%,90%{stroke-dashoffset:0}100%{stroke-dashoffset:190}}@keyframes roll{to{transform:rotate(360deg)}}
+.scene-7 .coil{animation:relay 3.2s steps(7) infinite}
+@keyframes relay{0%,18%{transform:none}70%,85%{transform:translateX(164px)}100%{transform:none}}
+.scene-8 .ornament{animation:ornamentdrop 3s steps(6) infinite}
+@keyframes ornamentdrop{0%,15%{transform:none;opacity:1}60%{transform:translate(154px,27px)}72%,85%{transform:translate(154px,48px);opacity:1}100%{transform:none;opacity:1}}
+.scene-9 .cup1{animation:stack1 3.6s steps(5) infinite}.scene-9 .cup2{animation:stack2 3.6s steps(5) infinite}.scene-9 .cup3{animation:stack3 3.6s steps(5) infinite}
+@keyframes stack1{0%,12%{transform:none}35%,85%{transform:translate(80px,0)}100%{transform:none}}
+@keyframes stack2{0%,30%{transform:none}55%,85%{transform:translate(-92px,-15px)}100%{transform:none}}
+@keyframes stack3{0%,48%{transform:none}72%,85%{transform:translate(95px,28px)}100%{transform:none}}
+@media(prefers-reduced-motion:reduce){.gameScene *,.hop .in,.bob,.wob,.cf{animation:none!important}}
+#msg.rules .gr{width:92vw;gap:.8vw}
+#msg.rules .gb{flex:1 1 16%;min-width:15%;font-size:clamp(14px,2.1vh,27px);padding:.7vh .7vw;overflow-wrap:anywhere}
+#msg.rules .tag{font-size:2.2vh;padding:.5vh 1.5vw}
+@media(max-height:700px){#msg.rules{gap:.8vh}.guideStep{min-height:0;font-size:2.1vh}.guideGoal{font-size:2.7vh}}
 #bd{height:100%;flex-direction:column}
 #T h1{font-size:7vh;color:var(--l);text-shadow:.6vh .6vh 0 #000}
 .tag{border:.5vh solid var(--g);padding:.8vh 2vw;font-size:2.6vh;color:var(--g)}
@@ -72,10 +120,10 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--g)}
 .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--c);transition:width .9s steps(12)}
 .nm{position:relative;z-index:1;padding-left:2vw;font-size:3.6vh;text-shadow:.4vh .4vh 0 #000;display:flex;gap:1.2vw;align-items:center}
 .pt{width:11vh;font-size:4.4vh;color:var(--l);text-align:right}
-.z0{--c:#d4af37}.z1{--c:#7a6420}.z2{--c:#b5651d}.z3{--c:#a8262c}
+.z0{--c:#d4af37}.z1{--c:#355b6c}.z2{--c:#865047}.z3{--c:#a8262c}
 .hid .bar i{width:0!important}.hid .nm{color:#555}
 .hop .in{animation:hop .5s steps(4)}
-#lg{font-size:2vh;color:var(--d);margin-top:1vh}
+#lg{font-size:2vh;color:var(--muted);margin-top:1vh}
 .bob{animation:bob 1s steps(2) infinite}.wob{animation:wob .6s steps(2) infinite}
 @keyframes hop{50%{transform:translateY(-1.4vh)}}@keyframes bob{50%{transform:translateY(-1.2vh)}}@keyframes wob{50%{transform:rotate(-8deg)}}
 .cf{position:fixed;top:-3vh;width:1.4vh;height:1.4vh;z-index:9;animation:fall linear forwards}
@@ -99,13 +147,82 @@ const G=[
 {n:'Ribbon Relay',t:'p',r:'Transfer the loosely wrapped ribbon from Partner A to Partner B by spinning. Fastest complete transfer wins.',u:[[1,8],[9,7],[10,6],[2,5],[3,4]]},
 {n:'Reindeer Droppings',t:'t',r:'Carry one ornament between your knees and drop it in the basket. Most successful drops in 90 seconds wins.',u:[[1,3,5,7,9],[2,4,6,8,10]]},
 {n:'Christmas Tree Stack',t:'t',r:'Stack cups on one teammate. Most cups still balanced after 60 seconds wins.',u:[[1,4,6,8,9],[2,3,5,7,10]]}];
+// The TV guide also serves as the host's agreed judging standard.
+const GUIDE=[
+{goal:'Knock all five cotton balls off the cups.',
+ steps:['Set five upside-down cups with one cotton ball on each.','On GO, use only the party blower to knock the balls off.','Finish when the fifth ball falls off.'],
+ turn:'2 players at a time',win:'Shortest time of all 10',points:'10 to 1 by time',
+ host:'Give each player the same five-cup setup. Start both on GO and tap Finish separately when each fifth ball falls.'},
+{goal:'Put out the candle without blowing directly.',
+ steps:['Hold the edge of a paper plate in your mouth.','On GO, move your head to fan the candle. No direct blowing.','Finish when your candle flame goes out.'],
+ turn:'2 players at a time',win:'Shortest time of all 10',points:'10 to 1 by time',
+ host:'Use the same candle distance for every player. Light both candles before GO; tap Finish for each flame separately.'},
+{goal:'Land the candy cane in the bottle three times.',
+ steps:['Each partner holds one end of the ribbon; the cane hangs between you.','On GO, lower the cane into the bottle, then lift it out.','Finish on the third successful drop. The clock keeps running.'],
+ turn:'1 pair at a time',win:'Fastest of 5 pairs',points:'Winning pair 10 each; others 5',
+ host:'Use the same ribbon and bottle position for every pair. Start on GO; do not reset the clock between successful drops.'},
+{goal:'Extinguish as many of eight tea lights as you can.',
+ steps:['Stand in front of eight lit tea lights.','Say “Merry Christmas!” once, in one breath. No separate blowing.','Count the flames that are out after the words.'],
+ turn:'1 attempt per person',win:'Highest candle count',points:'Tied counts share points',
+ host:'Relight all eight candles before each attempt. Enter the number out, from 0 to 8. Equal counts share the points for their occupied places.'},
+{goal:'Place the little tree as far past the line as possible.',
+ steps:['Both partners keep their feet behind the line.','One reaches to place the tree; the other supports their balance.','Release the tree. Measure its valid placement from the line.'],
+ turn:'1 pair at a time',win:'Farthest valid distance',points:'Winning pair 10 each; others 5',
+ host:'Measure from the line to the nearest edge of the tree base after release. A foot over the line or a tree that does not stay put is invalid; reset and retry.'},
+{goal:'Unroll the entire streamer as fast as possible.',
+ steps:['Each player starts with an identical rolled streamer.','On GO, unroll it without tearing or cutting it.','Finish when no part remains rolled.'],
+ turn:'2 players at a time',win:'Shortest time of all 10',points:'10 to 1 by time',
+ host:'Use identical rolls. One observer taps each Finish button. If a streamer tears, give that player a fresh identical roll and restart their timed run.'},
+{goal:'Spin the ribbon from Partner A to Partner B.',
+ steps:['Start with the ribbon wrapped loosely around Partner A.','On GO, both partners spin to transfer it. No pulling it by hand.','Finish when the ribbon is fully on Partner B.'],
+ turn:'1 pair at a time',win:'Fastest of 5 pairs',points:'Winning pair 10 each; others 5',
+ host:'Wrap the same length of ribbon loosely around Partner A for each pair. Stop when none remains on A.'},
+{goal:'Land the most ornaments in the basket in 90 seconds.',
+ steps:['Carry one ornament between your knees to the basket. No hands.','Drop it in, then tag the next teammate. Keep cycling.','At 90 seconds, count only ornaments inside the basket.'],
+ turn:'1 team of 5 at a time',win:'Higher successful count',points:'Winning team 10 each; other 5',
+ host:'Keep the start line and basket distance identical. A missed drop scores zero; tag the next teammate and keep cycling until time.'},
+{goal:'Balance the most cups on your teammate in 60 seconds.',
+ steps:['Choose one teammate to be the Christmas tree.','The other four stack cups on them until the timer ends.','At 60 seconds, count only cups still balanced without help.'],
+ turn:'1 team of 5 at a time',win:'Higher cup count',points:'Winning team 10 each; other 5',
+ host:'Give both teams the same cups and space. Cups that fall or are being held in place at the buzzer do not count.'}
+];
 // ---- pixel sprites ----
 const SP={
-tally:['BBBBBBBBBB','B........B','B.YY.....B','B.YY..Y..B','B.YY..Y..B','B.YY..Y..B','B.........B','BBBBBBBBBB'],
-screen:['BBBBBBBBBBBB','B..........B','B.GG..Y....B','B.GG.YYY...B','B.GG..Y....B','B....YYY...B','B..........B','BBBBBBBBBBBB','....BBBB....','...BBBBBB...'],
+tally:['BBBBBBBBBB','B........B','B.TT.....B','B.TT..Y..B','B.TT..Y..B','B.TT..Y..B','B.........B','BBBBBBBBBB'],
+screen:['BBBBBBBBBBBB','B..........B','B.II..Y....B','B.II.YYY...B','B.II..Y....B','B....YYY...B','B..........B','BBBBBBBBBBBB','....BBBB....','...BBBBBB...'],
 medal:['...YYY...','..YYYYY..','.YYYYYYY.','.YYY.YYY.','..YYYYY..','...YYY...','...B.B...','..B...B..']};
-const C={Y:'#f3d77a',G:'#2f9e5b',B:'#8a5a2b'};
+const C={Y:'#f3d77a',T:'#65d9cb',I:'#86baff',B:'#8a5a2b'};
 function spr(k,px){const a=SP[k];let s='';a.forEach((r,y)=>[...r].forEach((c,x)=>{if(C[c])s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${C[c]}"/>`}));return `<svg viewBox="0 0 ${a[0].length} ${a.length}" width="${a[0].length*px}" height="${a.length*px}" shape-rendering="crispEdges">${s}</svg>`}
+// Nine small, game-specific motion cues. The instructions remain readable without motion.
+const SCENES=[
+ '<path d="M30 90H290" stroke="var(--d)" stroke-width="3"/><rect x="13" y="58" width="20" height="20" fill="var(--coral)"/><path d="M34 62h25m-25 8h25" stroke="var(--teal)" stroke-width="3"/>'+
+ Array.from({length:5},(_,i)=>'<rect x="'+(58+i*45)+'" y="64" width="29" height="24" fill="#17202a" stroke="var(--ice)" stroke-width="3"/>').join('')+
+ '<g>'+Array.from({length:5},(_,i)=>'<circle class="snowball" cx="'+(72+i*45)+'" cy="57" r="7" fill="#f2ead3"/>').join('')+'</g>',
+ '<g class="plate"><rect x="61" y="25" width="9" height="65" fill="var(--teal)"/><rect x="55" y="22" width="21" height="7" fill="var(--ice)"/></g>'+
+ '<g class="wind" stroke="var(--ice)" stroke-width="3"><path d="M100 38h54m-45 17h65m-75 18h55"/></g><rect x="241" y="63" width="20" height="27" fill="var(--l)"/><path class="flame" d="M251 60q-14-16 0-30q14 16 0 30" fill="var(--coral)"/>',
+ '<path d="M58 25H262" stroke="var(--teal)" stroke-width="4"/><path d="M58 22v16m204-16v16" stroke="var(--l)" stroke-width="5"/>'+
+ '<path d="M135 60h50v40h-50z" fill="#14202a" stroke="var(--ice)" stroke-width="4"/><path d="M145 54h30" stroke="var(--ice)" stroke-width="5"/>'+
+ '<g class="cane"><path d="M160 25v17m0 0q0-16 13-16q12 0 12 11" fill="none" stroke="var(--coral)" stroke-width="7"/></g>',
+ '<path d="M25 91H295" stroke="var(--d)" stroke-width="3"/>'+
+ Array.from({length:8},(_,i)=>'<rect x="'+(36+i*33)+'" y="55" width="16" height="35" fill="#263744" stroke="var(--ice)" stroke-width="2"/>').join('')+
+ '<g>'+Array.from({length:8},(_,i)=>'<path class="flame" d="M'+(44+i*33)+' 54q-10-12 0-25q10 13 0 25" fill="var(--coral)"/>').join('')+'</g>',
+ '<path d="M48 91H285" stroke="var(--d)" stroke-width="3"/><path d="M74 28v70" stroke="var(--coral)" stroke-width="5"/>'+
+ Array.from({length:8},(_,i)=>'<path d="M'+(90+i*25)+' 87v7" stroke="var(--ice)" stroke-width="2"/>').join('')+
+ '<g class="tree"><path d="M114 29L95 65h38z" fill="var(--teal)"/><rect x="103" y="65" width="22" height="17" fill="var(--l)"/></g>',
+ '<circle class="roll" cx="65" cy="58" r="22" fill="#17202a" stroke="var(--coral)" stroke-width="7"/><circle cx="65" cy="58" r="7" fill="var(--l)"/>'+
+ '<path class="ribbon" d="M88 58H278" stroke="var(--ice)" stroke-width="7" fill="none"/><path d="M45 93H290" stroke="var(--d)" stroke-width="3"/>',
+ '<circle cx="80" cy="49" r="28" fill="#13222b" stroke="var(--ice)" stroke-width="4"/><circle cx="244" cy="49" r="28" fill="#13222b" stroke="var(--teal)" stroke-width="4"/>'+
+ '<g class="coil"><circle cx="80" cy="49" r="18" fill="none" stroke="var(--coral)" stroke-width="6"/><path d="M69 44q10-13 21 3q-10 13-21-3" fill="none" stroke="var(--l)" stroke-width="4"/></g>'+
+ '<text x="74" y="100" fill="var(--ice)" font-size="20" font-family="monospace">A</text><text x="238" y="100" fill="var(--teal)" font-size="20" font-family="monospace">B</text>',
+ '<path d="M47 92h200" stroke="var(--d)" stroke-width="3"/><path d="M54 25v68" stroke="var(--coral)" stroke-width="4"/>'+
+ '<path d="M224 66h52l-7 32h-38z" fill="#14212a" stroke="var(--ice)" stroke-width="4"/>'+
+ '<circle class="ornament" cx="75" cy="42" r="12" fill="var(--coral)" stroke="var(--l)" stroke-width="3"/>',
+ '<path d="M160 16l-44 74h88z" fill="#13342f" stroke="var(--teal)" stroke-width="4"/>'+
+ '<g class="cup1"><path d="M58 78h29l-4 17H62z" fill="var(--coral)"/></g>'+
+ '<g class="cup2"><path d="M242 78h29l-4 17h-21z" fill="var(--ice)"/></g>'+
+ '<g class="cup3"><path d="M56 29h29l-4 17H60z" fill="var(--l)"/></g>'
+];
+function scene(i){return '<div class="gameScene scene-'+(i+1)+'" aria-hidden="true"><svg viewBox="0 0 320 110" role="presentation">'+SCENES[i]+'</svg></div>'}
 // ---- state ----
 const D=()=>({v:0,g:0,m:['idle'],nm:Array.from({length:10},(_,i)=>'Player '+(i+1)),sc:Array.from({length:10},()=>Array(9).fill(null)),tb:Array(10).fill(0),rs:Array.from({length:9},()=>[]),ow:Array(9).fill(null)});
 let S=D();try{const x=localStorage.getItem('jialat26');if(x)S=Object.assign(D(),JSON.parse(x))}catch(e){}
@@ -127,7 +244,32 @@ const unresolvedTie=()=>{const st=stand(9);return st.some((o,i)=>i>0&&o.t===st[i
 const MODE=['time','time','time','count','distance','time','time','count','count'];
 const LIMIT={7:90,8:60};
 const units={time:'seconds',distance:'cm',count:'successful'};
-let Q=null,beeper=null;
+let Q=null,audioCtx=null,soundOn=false;
+try{soundOn=localStorage.getItem('jialat26-sound')==='1'}catch(e){}
+function audio(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;audioCtx=audioCtx||new C();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});return audioCtx}catch(e){return null}}
+function tone(f,d,delay=0,volume=.11){
+ if(!soundOn)return;const a=audio();if(!a||a.state!=='running')return;
+ try{const o=a.createOscillator(),gain=a.createGain(),t=a.currentTime+delay;
+  o.type='sine';o.frequency.value=f;gain.gain.setValueAtTime(.0001,t);
+  gain.gain.exponentialRampToValueAtTime(volume,t+.015);
+  gain.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(gain);gain.connect(a.destination);o.start(t);o.stop(t+d+.01)}catch(e){}
+}
+function cue(kind){
+ if(kind==='count')tone(620,.09,0,.10);
+ if(kind==='go'){tone(880,.18,0,.16);tone(1175,.2,.13,.11)}
+ if(kind==='finish')tone(740,.11,0,.08);
+ if(kind==='end'){tone(660,.22,0,.17);tone(440,.35,.19,.17)}
+ if(kind==='reveal'){tone(587,.14,0,.09);tone(784,.14,.15,.11);tone(988,.26,.3,.13)}
+ if(kind==='final'){tone(587,.14,0,.11);tone(784,.14,.15,.12);tone(988,.14,.3,.14);tone(1175,.32,.45,.16)}
+ if(kind==='test'){tone(660,.12,0,.1);tone(880,.18,.14,.12)}
+}
+function toggleSound(){
+ soundOn=!soundOn;try{localStorage.setItem('jialat26-sound',soundOn?'1':'0')}catch(e){}
+ if(soundOn){const a=audio();if(a)a.resume().then(()=>cue('test')).catch(()=>{})}
+ host()
+}
+function testSound(){const a=audio();if(a)a.resume().then(()=>cue('test')).catch(()=>{})}
 const size=g=>G[g].t=='s'?10:G[g].t=='p'?5:2;
 const vals=g=>{if(!Array.isArray(S.rs[g]))S.rs[g]=[];return S.rs[g]};
 const value=(g,i)=>vals(g)[i]??null;
@@ -174,27 +316,33 @@ function startTimer(g){
  if(Q||MODE[g]!=='time'&&!LIMIT[g])return;
  const open=Array.from({length:size(g)},(_,i)=>i).filter(i=>value(g,i)===null);
  if(!open.length)return;
- Q={g,slots:open.slice(0,MODE[g]=='time'&&G[g].t=='s'?2:1),start:performance.now(),ends:[],expired:false};
- if(LIMIT[g]){try{beeper=beeper||new (window.AudioContext||window.webkitAudioContext)();beeper.resume()}catch(e){}}
+ if(soundOn)audio();
+ Q={g,slots:open.slice(0,MODE[g]=='time'&&G[g].t=='s'?2:1),start:performance.now()+3000,ends:[],expired:false,go:false,count:0};
  host()
 }
 function finishTimer(j){
- if(!Q||MODE[Q.g]!=='time'||Q.ends[j]!=null)return;
+ if(!Q||!Q.go||MODE[Q.g]!=='time'||Q.ends[j]!=null)return;
  const g=Q.g,i=Q.slots[j],v=Math.max(.01,Math.round((performance.now()-Q.start)/10)/100);
  Q.ends[j]=v;if(Q.ends.filter(x=>x!=null).length===Q.slots.length)Q=null;
+ cue('finish');
  setResult(g,i,v,true)
 }
 function cancelTimer(){Q=null;host()}
-function beep(){try{if(!beeper)return;const o=beeper.createOscillator(),a=beeper.createGain();o.connect(a);a.connect(beeper.destination);o.frequency.value=880;a.gain.value=.15;o.start();o.stop(beeper.currentTime+.4)}catch(e){}}
 function tick(){
  if(!Q)return;
- const elapsed=performance.now()-Q.start,left=LIMIT[Q.g]?Math.max(0,LIMIT[Q.g]*1000-elapsed):elapsed;
+ const now=performance.now();
+ if(!Q.go){
+  const remaining=Math.ceil((Q.start-now)/1000);
+  if(remaining>0){if(Q.count!==remaining){Q.count=remaining;cue('count')}const c=$('clock');if(c)c.textContent='GO IN '+remaining;return}
+  Q.go=true;Q.start=now;cue('go');host()
+ }
+ const elapsed=now-Q.start,left=LIMIT[Q.g]?Math.max(0,LIMIT[Q.g]*1000-elapsed):elapsed;
  const c=$('clock');if(c)c.textContent=(left/1000).toFixed(LIMIT[Q.g]?1:2)+'s';
- if(LIMIT[Q.g]&&!Q.expired&&left<=0){Q.expired=true;beep();host()}
+ if(LIMIT[Q.g]&&!Q.expired&&left<=0){Q.expired=true;cue('end');host();const d=$('clock');if(d)d.textContent='0.0s'}
 }
 setInterval(tick,50);
-function tvm(m){if(m[0]=='rev'&&(!allDone()||unresolvedTie()))return;S.m=m;commit()}
-function rv(d){S.m=['rev',Math.max(0,Math.min(10,(S.m[1]||0)+d))];commit()}
+function tvm(m){if(m[0]=='rev'&&(!allDone()||unresolvedTie()))return;const changed=S.m[0]!==m[0]||S.m[1]!==m[1];S.m=m;commit();if(changed&&(m[0]=='board'&&[3,6,9].includes(m[1])||m[0]=='rev'))cue('reveal')}
+function rv(d){const k=Math.max(0,Math.min(10,(S.m[1]||0)+d));S.m=['rev',k];commit();if(d>0&&(k===1||k===10))cue(k===10?'final':'reveal')}
 function nn(i,v){S.nm[i]=v.trim().slice(0,14);commit()}
 function tbb(i,d){S.tb[i]=Math.max(0,(S.tb[i]||0)+d);commit()}
 function reset(){if(confirm('Reset ALL scores? Names are kept.')){const n=S.nm;Q=null;S=D();S.nm=n;commit()}}
@@ -209,9 +357,9 @@ function resultPanel(g){
   h+='<div class="turn"><div class="lb">NEXT TURN</div>';
   if(!active)h+=slots.length?'<div>'+slots.map(i=>label(g,i)).join(' <span style="color:var(--g)">vs</span> ')+'</div><div class="rw" style="margin-top:10px"><button class="go" onclick="startTimer('+g+')">Start '+(LIMIT[g]?LIMIT[g]+'s countdown':'timer')+'</button></div>':'<div>All results recorded. Edit a result below to correct or replay it.</div>';
   else{
-   h+='<div>'+slots.map(i=>label(g,i)).join(' <span style="color:var(--g)">vs</span> ')+'</div><div class="clock" id="clock">'+(LIMIT[g]?LIMIT[g].toFixed(1):'0.00')+'s</div>';
-   if(mode=='time')h+='<div class="rw">'+slots.map((i,j)=>'<button class="'+(Q.ends[j]!=null?'on':'go')+'" onclick="finishTimer('+j+')" '+(Q.ends[j]!=null?'disabled':'')+'>'+(Q.ends[j]!=null?'Saved '+shown(g,Q.ends[j])+'s':'Finish '+label(g,i))+'</button>').join('')+'</div>';
-   if(LIMIT[g])h+='<div class="'+(Q.expired?'warn':'hint')+'">'+(Q.expired?'TIME! Count the successful items and enter the result below.':'Count the successful items when the clock reaches zero.')+'</div>';
+   h+='<div>'+slots.map(i=>label(g,i)).join(' <span style="color:var(--g)">vs</span> ')+'</div><div class="clock" id="clock">'+(!Q.go?'GO IN 3':Q.expired?'0.0s':(LIMIT[g]?LIMIT[g].toFixed(1):'0.00')+'s')+'</div>';
+   if(mode=='time')h+='<div class="rw">'+slots.map((i,j)=>'<button class="'+(Q.ends[j]!=null?'on':'go')+'" onclick="finishTimer('+j+')" '+(Q.ends[j]!=null||!Q.go?'disabled':'')+'>'+(Q.ends[j]!=null?'Saved '+shown(g,Q.ends[j])+'s':'Finish '+label(g,i))+'</button>').join('')+'</div>';
+   if(LIMIT[g])h+='<div class="'+(Q.expired?'warn':'hint')+'">'+(Q.expired?'TIME! Count the successful items and enter the result below.':!Q.go?'Get ready. The round begins on GO.':'Count the successful items when the clock reaches zero.')+'</div>';
    h+='<div class="rw" style="margin-top:10px"><button onclick="cancelTimer()">Reset turn timer</button></div>';
   }
   h+='</div>';
@@ -233,12 +381,13 @@ function resultPanel(g){
 }
 function host(){const g=S.g,x=G[g],done=G.map((_,i)=>S.sc.every(r=>r[i]!=null)),m=S.m,ready=allDone()&&!unresolvedTie();
 const btn=[['Title',['idle']],['Rules',['rules',g]],['After G3',['board',3]],['After G6',['board',6]],['Live',['board',9]],['Final reveal',['rev',0]]];
-let h=`<div class="hd"><b><span class="host-icon" aria-hidden="true">${spr('tally',3)}</span>JIALAT 2026 · HOST</b></div><div class="lb">TV SHOWS</div><div class="rw">${btn.map(([l,mm])=>`<button class="${m[0]==mm[0]&&(m[0]!='board'||m[1]==mm[1])?'on':''}" onclick='tvm(${JSON.stringify(mm)})' ${l==='Final reveal'&&!ready?'disabled title="Complete all games and settle ties first"':''}>${l}</button>`).join('')}</div>`;
+let h=`<div class="hd"><b><span class="host-icon" aria-hidden="true">${spr('tally',3)}</span>JIALAT 2026 · HOST</b></div><div class="soundbar"><button class="${soundOn?'sound-on':''}" aria-pressed="${soundOn}" onclick="toggleSound()">${soundOn?'Sound on':'Enable sound'}</button>${soundOn?'<button onclick="testSound()">Test chime</button>':''}<span class="hint">Audio plays here on the host device.</span></div><div class="lb">TV SHOWS</div><div class="rw">${btn.map(([l,mm])=>`<button class="${m[0]==mm[0]&&(m[0]!='board'||m[1]==mm[1])?'on':''}" onclick='tvm(${JSON.stringify(mm)})' ${l==='Final reveal'&&!ready?'disabled title="Complete all games and settle ties first"':''}>${l}</button>`).join('')}</div>`;
 if(!ready)h+=`<div class="sm" style="margin-top:8px">Final reveal unlocks after all nine games and any ties are settled.</div>`;
 if(m[0]=='rev')h+=`<div class="rw" style="margin-top:8px"><button onclick="rv(-1)">◀ Back</button><button class="go" onclick="rv(1)">Next ▶ (${m[1]}/10)</button></div>`;
 h+=`<div class="lb">GAME</div><div class="tabs">${G.map((_,i)=>`<button class="${i==g?'on':''}" onclick="sg(${i})">${i+1}${done[i]?'✓':''}</button>`).join('')}</div>`;
 let c=`<div class="card"><div class="sm">GAME ${g+1} · ${TAG[x.t]}</div><h2>${x.n}</h2><p>${x.r}</p>`;
 c+=resultPanel(g);
+c+=`<details><summary>HOST CHECK · JUDGING</summary><div class="hostcheck">${esc(GUIDE[g].host)}</div></details>`;
 const sum=S.sc.reduce((a,r)=>a+(r[g]||0),0);
 c+=`<div class="rw" style="margin-top:10px"><button onclick="clr(${g})">Clear game</button></div><div class="sm" style="margin-top:8px">POINTS GIVEN ${sum} / ${EXP[x.t]} ${sum==EXP[x.t]?'✓':''}</div></div>`;
 h+=c;
@@ -251,10 +400,15 @@ $('H').innerHTML=h}
 // ---- tv ----
 const rows=[];
 function mkRows(){for(let i=0;i<10;i++){const d=document.createElement('div');d.className='row';d.innerHTML='<div class="in"><b class="rk"></b><div class="bar"><i></i><span class="nm"></span></div><b class="pt"></b></div>';$('rows').appendChild(d);rows.push(d)}}
-function confetti(){for(let k=0;k<80;k++){const s=document.createElement('span');s.className='cf';s.style.cssText=`left:${Math.random()*100}vw;background:${['#f3d77a','#d4af37','#fff','#2f9e5b','#e5484d'][k%5]};animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*1.5}s`;document.body.appendChild(s);setTimeout(()=>s.remove(),7000)}}
+function confetti(){for(let k=0;k<80;k++){const s=document.createElement('span');s.className='cf';s.style.cssText=`left:${Math.random()*100}vw;background:${['#f3d77a','#d4af37','#fff','#65d9cb','#ff8b78'][k%5]};animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*1.5}s`;document.body.appendChild(s);setTimeout(()=>s.remove(),7000)}}
 let lastRev=-1;
 function tv(){const m=S.m,b=m[0]=='board'||m[0]=='rev';$('bd').style.display=b?'flex':'none';$('msg').style.display=b?'none':'flex';
-if(!b){lastRev=-1;if(m[0]=='rules'){const x=G[m[1]];$('msg').innerHTML=`<div class="bob">${spr('screen',6)}</div><div class="sm">GAME ${m[1]+1} / 9</div><h1>${x.n}</h1><div class="tag">${TAG[x.t]}</div><p class="rl">${esc(x.r)}</p><div class="gr">${x.u?x.u.map((u,k)=>`<div class="gb">${x.t=='t'?'TEAM '+'AB'[k]+'<br>':''}${u.map(p=>nm(p-1)).join(x.t=='t'?' · ':' &amp; ')}</div>`).join(''):''}</div>`}
+$('msg').className=m[0]=='rules'?'rules':'';
+if(!b){lastRev=-1;if(m[0]=='rules'){const x=G[m[1]],a=GUIDE[m[1]],kind={s:'SOLO',p:'PAIRS',t:'TEAMS OF FIVE'}[x.t];
+$('msg').innerHTML=`<div class="sm">GAME ${String(m[1]+1).padStart(2,'0')} / 09</div><h1>${esc(x.n)}</h1><div class="tag">${kind}</div><div class="guideGoal">${esc(a.goal)}</div>${scene(m[1])}
+<div class="guideSteps">${a.steps.map((s,i)=>`<div class="guideStep"><b>STEP ${i+1}</b>${esc(s)}</div>`).join('')}</div>
+<div class="guideFacts"><div class="guideFact"><b>PLAY</b>${esc(a.turn)}</div><div class="guideFact"><b>WIN BY</b>${esc(a.win)}</div><div class="guideFact"><b>POINTS</b>${esc(a.points)}</div></div>
+${x.u?`<div class="sm">${x.t=='p'?'PAIR LINEUP':'TEAMS'}</div><div class="gr">${x.u.map((u,k)=>`<div class="gb">${x.t=='t'?'TEAM '+'AB'[k]+'<br>':''}${u.map(p=>nm(p-1)).join(x.t=='t'?' · ':' &amp; ')}</div>`).join('')}</div>`:''}`}
 else $('msg').innerHTML=`<div class="bob">${spr('screen',8)}</div><h1>JIALAT CHRISTMAS 2026</h1><div class="tag">18 YEARS · 10 FRIENDS · 9 GAMES</div>`;return}
 const rev=m[0]=='rev',k=rev?m[1]:10,n=rev?9:m[1],fin=rev||(n>=9&&allDone()),st=stand(n),top=Math.max(1,st[0].t);
 $('th').textContent=rev?'THE FINAL VERDICT':n>=9?(fin?'FINAL STANDINGS':'LIVE STANDINGS'):'AFTER GAME '+n;
@@ -269,9 +423,9 @@ if(rev&&k==10&&lastRev!=10)confetti();lastRev=rev?k:-1}
 function render(){document.body.className=ROLE||'landing';if(ROLE=='host')host();else if(ROLE=='tv')tv();else $('H').innerHTML=`<div class="chooser"><svg class="pixel-abacus" viewBox="0 0 18 14" aria-label="Animated pixel abacus" role="img">
 <path fill="#d4af37" d="M1 1h16v1H1zM1 2h1v10H1zM16 2h1v10h-1zM1 12h16v1H1z"/>
 <path fill="#6b5a22" d="M3 4h12v1H3zM3 7h12v1H3zM3 10h12v1H3z"/>
-<g class="bead-one"><path fill="#f3d77a" d="M4 3h2v3H4z"/></g>
-<g class="bead-two"><path fill="#f3d77a" d="M5 6h2v3H5z"/></g>
-<g class="bead-three"><path fill="#f3d77a" d="M7 9h2v3H7z"/></g>
+<g class="bead-one"><path fill="#65d9cb" d="M4 3h2v3H4z"/></g>
+<g class="bead-two"><path fill="#86baff" d="M5 6h2v3H5z"/></g>
+<g class="bead-three"><path fill="#ff8b78" d="M7 9h2v3H7z"/></g>
 </svg><h1>SCOREBOARD</h1><div class="rw"><button class="go" onclick="location.hash='host';location.reload()">iPad · Host</button><button class="go" onclick="location.hash='tv';location.reload()">MacBook · TV</button></div></div>`}
 if(ROLE=='tv'){mkRows();$('T').ondblclick=()=>document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}
 render();if(ROLE)conn();
