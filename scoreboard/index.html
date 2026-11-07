@@ -243,11 +243,13 @@ async function sendLatest(){
  if(sending||!queued)return;
  sending=true;const body=queued;queued=null;
  const ctrl=new AbortController(),limit=setTimeout(()=>ctrl.abort(),8000);
- try{const r=await fetch(URL_,{method:'POST',body,signal:ctrl.signal});if(!r.ok)throw Error('HTTP '+r.status);
+ try{const r=await fetch(URL_,{method:'POST',body,signal:ctrl.signal});if(!r.ok){const e=Error('HTTP '+r.status);e.status=r.status;e.retryAfter=Number(r.headers.get('Retry-After'))||0;throw e}
   clearTimeout(retryTimer);retryTimer=null;
   if(!queued){pending(null);status('ok','Update sent')}
- }catch(e){if(!queued)queued=body;pending(queued);status('bad','Sync unavailable · retrying');
-  clearTimeout(retryTimer);retryTimer=setTimeout(sendLatest,5000);
+ }catch(e){if(!queued)queued=body;pending(queued);
+  const detail=e.status===429?'Relay limit (429)':e.status?'Relay HTTP '+e.status:'Network request failed';
+  status('bad',detail+' · retrying');
+  clearTimeout(retryTimer);retryTimer=setTimeout(sendLatest,e.status===429?Math.max(5000,Math.min(1800000,e.retryAfter*1000||30000)):5000);
  }finally{clearTimeout(limit);sending=false;if(queued&&!retryTimer){clearTimeout(pt);pt=setTimeout(sendLatest,250)}}
 }
 function commit(){S.v=Math.max(Date.now(),S.v+1);save();render();push()}
@@ -265,11 +267,10 @@ async function poll(){if(polling||document.hidden)return;polling=true;
 function conn(){if(ROLE==='host'){status('','Ready to sync');if(!navigator.onLine)status('bad','Offline · retrying');return}
  status('','Connecting…');
  try{stream=new EventSource(URL_+'/sse?since=latest');
-  stream.onopen=()=>{streamOpen=true;status('ok','Live')};
-  stream.onerror=()=>{streamOpen=false;status('bad','Reconnecting · checking for updates');poll()};
+  stream.onopen=()=>{streamOpen=true;status('ok','Live');clearInterval(pollTimer);pollTimer=null};
+  stream.onerror=()=>{streamOpen=false;status('bad','Reconnecting · checking for updates');if(!pollTimer)pollTimer=setInterval(poll,30000);poll()};
   stream.onmessage=ev=>{try{receive(JSON.parse(ev.data))}catch(e){}};
- }catch(e){status('bad','Connection unavailable · retrying')}
- if(!pollTimer)pollTimer=setInterval(poll,20000);
+ }catch(e){status('bad','Connection unavailable · retrying');if(!pollTimer)pollTimer=setInterval(poll,30000)}
  poll();
 }
 window.addEventListener('online',()=>{if(ROLE==='host')sendLatest();else if(ROLE==='tv')poll()});
