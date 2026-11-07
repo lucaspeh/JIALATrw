@@ -61,6 +61,15 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--g)}
 /* tv */
 #T{height:100vh;padding:3vh 4vw;text-align:center}
 #msg{height:100%;flex-direction:column;align-items:center;justify-content:center;gap:2.4vh}
+#msg.spotlight{border:1vh solid var(--g);background:radial-gradient(circle at 50% 42%,#2b220d 0%,#0a0a0a 68%);padding:3vh 4vw;gap:2vh}
+#msg.spotlight.trophy{border-color:var(--coral);background:radial-gradient(circle at 50% 42%,#341c19 0%,#0a0a0a 68%)}
+#msg.spotlight h1{font-size:clamp(46px,10vh,130px);line-height:1.02;letter-spacing:.08em}
+#msg.spotlight .spot-name{font-size:clamp(42px,9vh,120px);line-height:1.1;color:#fff;text-shadow:.7vh .7vh 0 #000;overflow-wrap:anywhere}
+#msg.spotlight .spot-rank{font-size:clamp(20px,4vh,48px);color:var(--g);letter-spacing:.18em}
+#msg.spotlight.trophy .spot-rank{color:var(--coral)}
+#msg.spotlight .spot-icon svg{width:min(17vh,170px);height:auto;animation:spot-bob 1.2s steps(3) infinite alternate}
+@keyframes spot-bob{to{transform:translateY(-1vh) rotate(5deg)}}
+@media(prefers-reduced-motion:reduce){#msg.spotlight .spot-icon svg{animation:none}}
 #msg.rules{gap:1.3vh;padding:1vh 0}
 #msg.rules h1{font-size:clamp(28px,6vh,76px);line-height:1.05}
 .guideGoal{font-size:clamp(18px,3vh,38px);color:#fff;font-weight:400;max-width:90vw}
@@ -149,6 +158,8 @@ const G=[
 {n:'Ribbon Relay',t:'p',r:'Transfer the loosely wrapped ribbon from Partner A to Partner B by spinning. Fastest complete transfer wins.',u:[[1,8],[9,7],[10,6],[2,5],[3,4]]},
 {n:'Reindeer Droppings',t:'t',r:'Carry one ornament between your knees and drop it in the basket. Most successful drops in 90 seconds wins.',u:[[1,3,5,7,9],[2,4,6,8,10]]},
 {n:'Christmas Tree Stack',t:'t',r:'Stack cups on one teammate. Most cups still balanced after 60 seconds wins.',u:[[1,4,6,8,9],[2,3,5,7,10]]}];
+const REVEAL_ORDER=[4,5,6,9,3,8,7,2,1,10];
+const ordinal=n=>n+(n===1?'st':n===2?'nd':n===3?'rd':'th');
 // The TV guide also serves as the host's agreed judging standard.
 const GUIDE=[
 {goal:'Knock all five cotton balls off the cups.',
@@ -192,7 +203,8 @@ const GUIDE=[
 const SP={
 tally:['BBBBBBBBBB','B........B','B.TT.....B','B.TT..Y..B','B.TT..Y..B','B.TT..Y..B','B.........B','BBBBBBBBBB'],
 screen:['BBBBBBBBBBBB','B..........B','B.II..Y....B','B.II.YYY...B','B.II..Y....B','B....YYY...B','B..........B','BBBBBBBBBBBB','....BBBB....','...BBBBBB...'],
-medal:['...YYY...','..YYYYY..','.YYYYYYY.','.YYY.YYY.','..YYYYY..','...YYY...','...B.B...','..B...B..']};
+medal:['...YYY...','..YYYYY..','.YYYYYYY.','.YYY.YYY.','..YYYYY..','...YYY...','...B.B...','..B...B..'],
+trophy:['.BYYYYYYYYB.','B.YYYYYYYY.B','B.YYYYYYYY.B','B..YYYYYY..B','.B.YYYYYY.B.','..B.YYYY.B..','...BYYYYB...','.....YY.....','....BBBB....','...BBBBBB...']};
 const C={Y:'#f3d77a',T:'#65d9cb',I:'#86baff',B:'#8a5a2b'};
 function spr(k,px){const a=SP[k];let s='';a.forEach((r,y)=>[...r].forEach((c,x)=>{if(C[c])s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${C[c]}"/>`}));return `<svg viewBox="0 0 ${a[0].length} ${a.length}" width="${a[0].length*px}" height="${a.length*px}" shape-rendering="crispEdges">${s}</svg>`}
 // Nine small, game-specific motion cues. The instructions remain readable without motion.
@@ -226,7 +238,7 @@ const SCENES=[
 ];
 function scene(i){return '<div class="gameScene scene-'+(i+1)+'" aria-hidden="true"><svg viewBox="0 0 320 110" role="presentation">'+SCENES[i]+'</svg></div>'}
 // ---- state ----
-const D=()=>({v:0,g:0,m:['idle'],nm:Array.from({length:10},(_,i)=>'Player '+(i+1)),sc:Array.from({length:10},()=>Array(9).fill(null)),tb:Array(10).fill(0),rs:Array.from({length:9},()=>[]),ow:Array(9).fill(null)});
+const D=()=>({v:0,g:0,m:['idle'],finalShown:false,spotlight:false,nm:Array.from({length:10},(_,i)=>'Player '+(i+1)),sc:Array.from({length:10},()=>Array(9).fill(null)),tb:Array(10).fill(0),rs:Array.from({length:9},()=>[]),ow:Array(9).fill(null)});
 let S=D();try{const x=localStorage.getItem('jialat26');if(x)S=Object.assign(D(),JSON.parse(x))}catch(e){}
 if(!Array.isArray(S.rs)||S.rs.length!==9)S.rs=D().rs;
 if(!Array.isArray(S.ow)||S.ow.length!==9)S.ow=D().ow;
@@ -282,7 +294,7 @@ const unresolvedTie=()=>{const st=stand(9);return st.some((o,i)=>i>0&&o.t===st[i
 const MODE=['time','time','time','count','distance','time','time','count','count'];
 const LIMIT={7:90,8:60};
 const units={time:'seconds',distance:'cm',count:'successful'};
-let Q=null,audioCtx=null,soundOn=false;
+let Q=null,audioCtx=null,soundOn=false,revealCheck=false;
 try{soundOn=localStorage.getItem('jialat26-sound')==='1'}catch(e){}
 function audio(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;audioCtx=audioCtx||new C();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});return audioCtx}catch(e){return null}}
 function tone(f,d,delay=0,volume=.11){
@@ -340,14 +352,14 @@ function setResult(g,i,raw,fromTimer=false){
   if(MODE[g]=='time')v=Math.round(v*100)/100;
   if(MODE[g]=='distance')v=Math.round(v*10)/10;
  }
- vals(g)[i]=v;S.ow[g]=null;
+ vals(g)[i]=v;S.ow[g]=null;S.finalShown=false;if(S.m[0]=='rev')S.m=['board',9];
  if(Q&&Q.g===g&&!fromTimer)Q=null;
  recalc(g);commit();
 }
-function chooseWinner(g,i){if(!leaders(g).includes(i))return;S.ow[g]=i;recalc(g);commit()}
+function chooseWinner(g,i){if(!leaders(g).includes(i))return;S.ow[g]=i;S.finalShown=false;if(S.m[0]=='rev')S.m=['board',9];recalc(g);commit()}
 function clr(g){
  if((filled(g)||S.sc.some(r=>r[g]!==null))&&!confirm('Clear every result and score for this game?'))return;
- if(Q&&Q.g===g)Q=null;S.rs[g]=[];S.ow[g]=null;S.sc.forEach(r=>r[g]=null);commit()
+ if(Q&&Q.g===g)Q=null;S.rs[g]=[];S.ow[g]=null;S.sc.forEach(r=>r[g]=null);S.finalShown=false;if(S.m[0]=='rev')S.m=['board',9];commit()
 }
 function sg(i){if(Q&&Q.g!==i){if(!confirm('Cancel the running timer and switch games?'))return;Q=null}S.g=i;if(S.m[0]=='rules')S.m=['rules',i];commit()}
 function startTimer(g){
@@ -379,10 +391,13 @@ function tick(){
  if(LIMIT[Q.g]&&!Q.expired&&left<=0){Q.expired=true;cue('end');host();const d=$('clock');if(d)d.textContent='0.0s'}
 }
 setInterval(tick,50);
-function tvm(m){if(m[0]=='rev'&&(!allDone()||unresolvedTie()))return;const changed=S.m[0]!==m[0]||S.m[1]!==m[1];S.m=m;commit();if(changed&&(m[0]=='board'&&[3,6,9].includes(m[1])||m[0]=='rev'))cue('reveal')}
-function rv(d){const k=Math.max(0,Math.min(10,(S.m[1]||0)+d));S.m=['rev',k];commit();if(d>0&&(k===1||k===10))cue(k===10?'final':'reveal')}
+function tvm(m){if(m[0]=='rev'&&(!allDone()||unresolvedTie())){tryReveal();return}const changed=S.m[0]!==m[0]||S.m[1]!==m[1];S.m=m;commit();if(changed&&(m[0]=='board'&&[3,6,9].includes(m[1])||m[0]=='rev'))cue('reveal')}
+function tryReveal(){if(allDone()&&!unresolvedTie()){revealCheck=false;S.finalShown=false;S.spotlight=false;tvm(['rev',0]);return}revealCheck=true;host();const p=$('revealCheck');if(p)p.scrollIntoView({block:'start',behavior:'smooth'})}
+function awardTie(i){if(!allDone())return;const st=stand(9),o=st.find(x=>x.i===i);if(!o||!st.some(x=>x.i!==i&&x.t===o.t&&x.b===o.b))return;tbb(i,1)}
+function rv(d){if(!allDone()||unresolvedTie()){S.m=['board',9];commit();tryReveal();return}const k=Math.max(0,Math.min(10,(S.m[1]||0)+d));S.m=['rev',k];S.spotlight=k>0&&(REVEAL_ORDER[k-1]===1||REVEAL_ORDER[k-1]===10);S.finalShown=k===10;commit();if(d>0&&(k===9||k===10))cue(k===10?'final':'reveal')}
+function closeSpotlight(){if(S.m[0]!=='rev'||!S.spotlight)return;S.spotlight=false;commit()}
 function nn(i,v){S.nm[i]=v.trim().slice(0,14);commit()}
-function tbb(i,d){S.tb[i]=Math.max(0,(S.tb[i]||0)+d);commit()}
+function tbb(i,d){S.tb[i]=Math.max(0,(S.tb[i]||0)+d);S.finalShown=false;if(S.m[0]=='rev')S.m=['board',9];commit()}
 function reset(){if(confirm('Reset ALL scores? Names are kept.')){const n=S.nm;Q=null;S=D();S.nm=n;commit()}}
 function copyRes(){const t='🎄 JIALAT Christmas 2026\n'+stand(9).map(o=>`${o.r}. ${rn(o.i)} - ${o.t}`).join('\n');navigator.clipboard.writeText(t).catch(()=>prompt('Copy:',t))}
 // ---- host ----
@@ -419,9 +434,19 @@ function resultPanel(g){
 }
 function host(){const g=S.g,x=G[g],done=G.map((_,i)=>S.sc.every(r=>r[i]!=null)),m=S.m,ready=allDone()&&!unresolvedTie();
 const btn=[['Title',['idle']],['Rules',['rules',g]],['After G3',['board',3]],['After G6',['board',6]],['Live',['board',9]],['Final reveal',['rev',0]]];
-let h=`<div class="hd"><b><span class="host-icon" aria-hidden="true">${spr('tally',3)}</span>JIALAT 2026 · HOST</b></div><div class="soundbar"><button class="${soundOn?'sound-on':''}" aria-pressed="${soundOn}" onclick="toggleSound()">${soundOn?'Sound on':'Enable sound'}</button>${soundOn?'<button onclick="testSound()">Test chime</button>':''}<span class="hint">Audio plays here on the host device.</span></div><div class="lb">TV SHOWS</div><div class="rw">${btn.map(([l,mm])=>`<button class="${m[0]==mm[0]&&(m[0]!='board'||m[1]==mm[1])?'on':''}" onclick='tvm(${JSON.stringify(mm)})' ${l==='Final reveal'&&!ready?'disabled title="Complete all games and settle ties first"':''}>${l}</button>`).join('')}</div>`;
-if(!ready)h+=`<div class="sm" style="margin-top:8px">Final reveal unlocks after all nine games and any ties are settled.</div>`;
-if(m[0]=='rev')h+=`<div class="rw" style="margin-top:8px"><button onclick="rv(-1)">◀ Back</button><button class="go" onclick="rv(1)">Next ▶ (${m[1]}/10)</button></div>`;
+let h=`<div class="hd"><b><span class="host-icon" aria-hidden="true">${spr('tally',3)}</span>JIALAT 2026 · HOST</b></div><div class="soundbar"><button class="${soundOn?'sound-on':''}" aria-pressed="${soundOn}" onclick="toggleSound()">${soundOn?'Sound on':'Enable sound'}</button>${soundOn?'<button onclick="testSound()">Test chime</button>':''}<span class="hint">Audio plays here on the host device.</span></div><div class="lb">TV SHOWS</div><div class="rw">${btn.map(([l,mm])=>`<button class="${m[0]==mm[0]&&(m[0]!='board'||m[1]==mm[1])?'on':''}" onclick='${l==='Final reveal'?'tryReveal()':'tvm('+JSON.stringify(mm)+')'}'>${l}</button>`).join('')}</div>`;
+if(!ready)h+=`<div class="sm" style="margin-top:8px">Tap Final reveal to check what is still needed.</div>`;
+if(revealCheck&&!ready){
+ const missing=G.map((_,i)=>i).filter(i=>!done[i]),st=stand(9),groups=[];
+ if(allDone())for(let a=0;a<st.length;){let b=a+1;while(b<st.length&&st[b].t===st[a].t&&st[b].b===st[a].b)b++;if(b-a>1)groups.push({rank:a+1,players:st.slice(a,b)});a=b}
+ h+='<div class="card" id="revealCheck"><div class="lb">BEFORE THE FINAL REVEAL</div>';
+ missing.forEach(i=>{const n=filled(i),total=size(i),top=n===total?leaders(i):[];
+  const reason=n<total?`${total-n} result${total-n===1?'':'s'} missing`:top.length>1?'Top result tied: choose the winner':'Points incomplete';
+  h+=`<div class="hint" style="margin:10px 0">Game ${i+1} · ${esc(G[i].n)}: ${reason}<button onclick="sg(${i})">Open game ${i+1}</button></div>`});
+ groups.forEach(group=>{h+=`<div class="hint" style="margin:10px 0">${group.rank}${group.rank===1?'st':group.rank===2?'nd':group.rank===3?'rd':'th'} place is tied. Replay Snow Blower with these players, then give the winner +1:<div class="rw">${group.players.map(o=>`<button onclick="awardTie(${o.i})">+1 ${nm(o.i)}</button>`).join('')}</div></div>`});
+ h+='</div>'
+}
+if(m[0]=='rev')h+=S.spotlight?`<div class="rw" style="margin-top:8px"><button class="go" onclick="closeSpotlight()">${m[1]===10?'Show final standings':'Show rankings'}</button></div>`:`<div class="rw" style="margin-top:8px"><button onclick="rv(-1)" ${m[1]===0?'disabled':''}>◀ Back</button><button class="go" onclick="rv(1)" ${m[1]===10?'disabled':''}>${m[1]===10?'Reveal complete':'Next ▶ '+ordinal(REVEAL_ORDER[m[1]])} (${m[1]}/10)</button></div>`;
 h+=`<div class="lb">GAME</div><div class="tabs">${G.map((_,i)=>`<button class="${i==g?'on':''}" onclick="sg(${i})">${i+1}${done[i]?'✓':''}</button>`).join('')}</div>`;
 let c=`<div class="card"><div class="sm">GAME ${g+1} · ${TAG[x.t]}</div><h2>${x.n}</h2><p>${x.r}</p>`;
 c+=resultPanel(g);
@@ -440,18 +465,20 @@ const rows=[];
 function mkRows(){for(let i=0;i<10;i++){const d=document.createElement('div');d.className='row';d.innerHTML='<div class="in"><b class="rk"></b><div class="bar"><i></i><span class="nm"></span></div><b class="pt"></b></div>';$('rows').appendChild(d);rows.push(d)}}
 function confetti(){for(let k=0;k<80;k++){const s=document.createElement('span');s.className='cf';s.style.cssText=`left:${Math.random()*100}vw;background:${['#f3d77a','#d4af37','#fff','#65d9cb','#ff8b78'][k%5]};animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*1.5}s`;document.body.appendChild(s);setTimeout(()=>s.remove(),7000)}}
 let lastRev=-1;
-function tv(){const m=S.m,b=m[0]=='board'||m[0]=='rev';$('bd').style.display=b?'flex':'none';$('msg').style.display=b?'none':'flex';
-$('msg').className=m[0]=='rules'?'rules':'';
-if(!b){lastRev=-1;if(m[0]=='rules'){const x=G[m[1]],a=GUIDE[m[1]],kind={s:'SOLO',p:'PAIRS',t:'TEAMS OF FIVE'}[x.t];
+function tv(){const m=S.m,rank=m[0]=='rev'&&m[1]>0?REVEAL_ORDER[m[1]-1]:null,spot=m[0]=='rev'&&S.spotlight&&(rank===1||rank===10),sealed=m[0]=='board'&&m[1]>=9&&allDone()&&!S.finalShown,b=!sealed&&!spot&&(m[0]=='board'||m[0]=='rev');$('bd').style.display=b?'flex':'none';$('msg').style.display=b?'none':'flex';
+$('msg').className=spot?'spotlight '+(rank===10?'trophy':'champion'):m[0]=='rules'?'rules':'';
+if(!b){lastRev=-1;if(spot){const st=stand(9),who=st[rank-1];$('msg').innerHTML=`<div class="spot-icon">${spr(rank===10?'trophy':'medal',14)}</div><div class="spot-rank">${rank===10?'10TH PLACE · THE JIALAT TROPHY':'1ST PLACE · CHAMPION'}</div><h1>${rank===10?'THE JIALAT TROPHY':'THE CHAMPION'}</h1><div class="spot-name">${nm(who.i)}</div>`}
+else if(sealed){$('msg').innerHTML=`<div class="bob">${spr('screen',8)}</div><h1>ALL NINE GAMES COMPLETE</h1><div class="tag">THE FINAL REVEAL IS COMING</div>`}
+else if(m[0]=='rules'){const x=G[m[1]],a=GUIDE[m[1]],kind={s:'SOLO',p:'PAIRS',t:'TEAMS OF FIVE'}[x.t];
 $('msg').innerHTML=`<div class="sm">GAME ${String(m[1]+1).padStart(2,'0')} / 09</div><h1>${esc(x.n)}</h1><div class="tag">${kind}</div><div class="guideGoal">${esc(a.goal)}</div>${scene(m[1])}
 <div class="guideSteps">${a.steps.map((s,i)=>`<div class="guideStep"><b>STEP ${i+1}</b>${esc(s)}</div>`).join('')}</div>
 <div class="guideFacts"><div class="guideFact"><b>PLAY</b>${esc(a.turn)}</div><div class="guideFact"><b>WIN BY</b>${esc(a.win)}</div><div class="guideFact"><b>POINTS</b>${esc(a.points)}</div></div>
 ${x.u?`<div class="sm">${x.t=='p'?'PAIR LINEUP':'TEAMS'}</div><div class="gr">${x.u.map((u,k)=>`<div class="gb">${x.t=='t'?'TEAM '+'AB'[k]+'<br>':''}${u.map(p=>nm(p-1)).join(x.t=='t'?' · ':' &amp; ')}</div>`).join('')}</div>`:''}`}
 else $('msg').innerHTML=`<div class="bob">${spr('screen',8)}</div><h1>JIALAT CHRISTMAS 2026</h1><div class="tag">18 YEARS · 10 FRIENDS · 9 GAMES</div>`;return}
-const rev=m[0]=='rev',k=rev?m[1]:10,n=rev?9:m[1],fin=rev||(n>=9&&allDone()),st=stand(n),top=Math.max(1,st[0].t);
+const rev=m[0]=='rev',k=rev?m[1]:10,n=rev?9:m[1],fin=rev||(n>=9&&allDone()&&S.finalShown),st=stand(n),top=Math.max(1,st[0].t);
 $('th').textContent=rev?'THE FINAL VERDICT':n>=9?(fin?'FINAL STANDINGS':'LIVE STANDINGS'):'AFTER GAME '+n;
-$('ban').textContent=!rev?'':k==10?'👑 CHAMPION: '+rn(st[0].i).toUpperCase():k>=4?"NEXT YEAR'S ORGANISERS: "+[6,7,8].map(j=>rn(st[j].i)).join(' · ').toUpperCase():k>=1?'THE JIALAT TROPHY GOES TO '+rn(st[9].i).toUpperCase():'';
-st.forEach(o=>{const d=rows[o.i],hide=rev&&o.r<=10-k,z=o.r==10?3:o.r>=7?2:o.r==1?0:1,old=d.dataset.r;
+$('ban').textContent=!rev||!k?'':rank===10?'THE JIALAT TROPHY GOES TO '+rn(st[9].i).toUpperCase():rank===1?'CHAMPION: '+rn(st[0].i).toUpperCase():rank>=7?'NEXT YEAR’S ORGANISER: '+rn(st[rank-1].i).toUpperCase():'#'+rank+' SAFE: '+rn(st[rank-1].i).toUpperCase();
+st.forEach(o=>{const d=rows[o.i],hide=rev&&!REVEAL_ORDER.slice(0,k).includes(o.r),z=o.r==10?3:o.r>=7?2:o.r==1?0:1,old=d.dataset.r;
 d.style.transform=`translateY(${(o.r-1)*100}%)`;d.className='row z'+z+(hide?' hid':'');
 if(old&&old!=o.r&&!hide){d.classList.add('hop')}d.dataset.r=o.r;
 d.querySelector('.rk').textContent=o.r;d.querySelector('.nm').innerHTML=hide?'???':esc(rn(o.i))+(fin&&o.r==10?`<span class="wob">${spr('medal',3)}</span>`:fin&&o.r>=7&&o.r<10?'<small>ORGANISER</small>':'');
