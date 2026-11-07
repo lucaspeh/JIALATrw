@@ -5,7 +5,7 @@
 <title>Room Wars</title>
 
 <style>
-:root{--bg:#0a0a0a;--g:#d4af37;--l:#f3d77a;--d:#6b5a22;--m:#a08a45;--t:#f2ead3;--card:#111;--tx:#f2ead3;--mu:#a08a45;--g1:#f3d77a;--g2:#d4af37;--g3:#6b5a22;--bd:#6b5a22;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#0a0a0a;--g:#d4af37;--l:#f3d77a;--d:#6b5a22;--m:#b9b6a8;--t:#f2ead3;--ice:#86baff;--teal:#65d9cb;--coral:#ff8b78;--card:#111;--tx:#f2ead3;--mu:#b9b6a8;--g1:#f3d77a;--g2:#d4af37;--g3:#6b5a22;--bd:#6b5a22;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0}
 body{background:var(--bg);color:var(--t);font:700 15px/1.45 "Courier New",ui-monospace,monospace;letter-spacing:.04em;padding:16px 14px 28px;max-width:520px;margin:0 auto;min-height:100vh}
 h1,h2{margin:0;font:inherit;text-transform:uppercase}
@@ -24,13 +24,17 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--g)}textarea
 .rank{position:relative;display:flex;align-items:center;gap:12px;padding:10px 12px;background:#111;border:3px solid var(--d);margin-bottom:9px;box-shadow:3px 3px 0 #000}
 .rank::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--w,0%);background:var(--c,transparent);transition:width .6s steps(8)}
 .rank>*{position:relative}.rank .n,.rank .g b,.rank .g small,.rank .pts,.rank .pts small{color:#fff;text-shadow:2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000}.rank.done .n,.rank.done .g b,.rank.done .g small{color:var(--t)}.rank.first{border-color:var(--g);background:#2a2108}.rank.done{opacity:.45}
-.z0{--c:#d4af37}.z1{--c:#7a6420}.z2{--c:#b5651d}.z3{--c:#a8262c}
+.z0{--c:#d4af37}.z1{--c:#355b6c}.z2{--c:#865047}.z3{--c:#a8262c}
 .n{font-size:22px;width:30px;text-align:center;color:var(--l);text-shadow:2px 2px 0 #000}.g{flex:1;min-width:0}.g b{display:block;text-shadow:2px 2px 0 #000}.g small{color:var(--t);font-weight:400;font-size:12px;text-shadow:1px 1px 0 #000}
 .pts{font-weight:700;font-size:20px;text-align:right;color:var(--l);text-shadow:2px 2px 0 #000}.pts small{display:block;font-weight:400;color:var(--t);font-size:11px}
 .arena{height:46vh;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:24px;user-select:none;-webkit-user-select:none;touch-action:manipulation;background:var(--g);color:#0a0a0a;padding:16px;border:3px solid #000;box-shadow:6px 6px 0 var(--d)}
+.arena.tap-ar,.arena.result-tap{background:var(--coral);--pulse:var(--coral)}
+.arena.stop-ar,.arena.result-stop{background:var(--ice);--pulse:var(--ice)}
+.arena.result-react{background:var(--teal);--pulse:var(--teal)}
+.arena.react-ar{--pulse:var(--teal)}
 .arena small{font-weight:400;font-size:14px;margin-top:8px}.big{font-size:56px;line-height:1.1}
-.cd{font-size:64px;line-height:1.1;color:var(--l);text-shadow:3px 3px 0 #000;margin:8px 0 2px}
-.hp{height:18px;border:3px solid var(--d);background:#111;margin:8px 0}.hp i{display:block;height:100%;background:var(--g);transition:width .3s steps(4)}
+.cd{font-size:64px;line-height:1.1;color:var(--ice);text-shadow:3px 3px 0 #000;margin:8px 0 2px}
+.hp{height:18px;border:3px solid var(--d);background:#111;margin:8px 0}.hp i{display:block;height:100%;background:var(--teal);transition:width .3s steps(4)}
 .tag{display:inline-block;font-size:11px;padding:2px 8px;border:2px solid var(--g);color:var(--g)}
 .live{font-size:12px;color:var(--m);font-weight:400;margin:0 0 8px;text-transform:uppercase}a{color:var(--l)}
 .game .gt{display:flex;align-items:center;gap:12px}.gt>div{flex:1}.gi{width:36px;height:36px;flex:none}.gl{font-size:11px;letter-spacing:.2em;color:var(--m)}.gn{font-size:18px;color:var(--l)}
@@ -41,7 +45,7 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--g)}textarea
 .cf{position:fixed;top:-20px;width:8px;height:8px;animation:fall linear infinite;pointer-events:none;z-index:5}
 @keyframes fall{to{transform:translateY(110vh)}}
 @keyframes pop{50%{transform:scale(1.25)}}@keyframes shake{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
-@keyframes glow{from{box-shadow:0 0 0 0 var(--l),6px 6px 0 var(--d)}to{box-shadow:0 0 0 16px transparent,6px 6px 0 var(--d)}}
+@keyframes glow{from{box-shadow:0 0 0 0 var(--pulse,var(--l)),6px 6px 0 var(--d)}to{box-shadow:0 0 0 16px transparent,6px 6px 0 var(--d)}}
 @keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}@keyframes bob{50%{transform:translateY(-6px)}}
 .pop{animation:pop .2s steps(2)}.shake{animation:shake .4s steps(4)}.glow{animation:glow .6s steps(5)}.rise{animation:rise .4s steps(4)}.bob{animation:bob 1s steps(2) infinite}
 @media(prefers-reduced-motion:reduce){.pop,.shake,.glow,.rise,.bob,.brand .sp rect:nth-child(3n){animation:none}.cf{display:none}}
@@ -60,7 +64,7 @@ star:["....Y....","....Y....","...YYY...","YYYYYYYYY",".YYYYYYY.","..YYYYY..",".
 tap:["...YY....","...YY....","...YY....","...YYYY..",".YYYYYYY.","YYYYYYYYY","YYYYYYYYY",".YYYYYYY.","..YYYYY.."],
 react:["....YYY..","...YYY...","..YYY....",".YYYYYY..","...YYY...","..YYY....",".YY......",".Y......."],
 stop:["...YYY...",".YYYYYYY.","YY..Y..YY","Y...Y...Y","Y...YYY.Y","Y.......Y","YY.....YY",".YYYYYYY."]};
-function spr(k,px){var a=SP[k],s="";a.forEach(function(r,y){for(var x=0;x<r.length;x++)if(r[x]=="Y")s+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="#f3d77a"/>'});return'<svg class="sp" viewBox="0 0 '+a[0].length+' '+a.length+'" width="'+a[0].length*px+'" height="'+a.length*px+'" shape-rendering="crispEdges" aria-hidden="true">'+s+'</svg>'}
+function spr(k,px){var a=SP[k],s="",col={trophy:"#f3d77a",star:"#86baff",tap:"#ff8b78",react:"#65d9cb",stop:"#86baff"}[k]||"#f3d77a";a.forEach(function(r,y){for(var x=0;x<r.length;x++)if(r[x]=="Y")s+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+col+'"/>'});return'<svg class="sp" viewBox="0 0 '+a[0].length+' '+a.length+'" width="'+a[0].length*px+'" height="'+a.length*px+'" shape-rendering="crispEdges" aria-hidden="true">'+s+'</svg>'}
 function brand(t,k){return'<div class="brand"><div class="bob">'+spr(k||"trophy",5)+'</div><h1>'+t+'</h1></div>'}
 function zc(i){return i==0?0:i==4?3:i==3?2:1}
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}return null}
@@ -240,7 +244,7 @@ function ac(){if(!snd){var C=window.AudioContext||window.webkitAudioContext;if(C
 document.addEventListener("pointerdown",function(){var a=ac();if(a&&a.state=="suspended")a.resume()});
 function chime(f){var a=ac();if(!a||a.state!="running")return;f.forEach(function(fr,i){var o=a.createOscillator(),g=a.createGain(),t=a.currentTime+i*.22;o.type="sine";o.frequency.value=fr;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.7);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+.75)})}
 function fin(g,v){view="fin";
- var big='<h1 style="text-align:center">'+esc(pn(me))+'</h1><p class="sub" style="text-align:center;margin:-2px 0 12px">'+G[g].n+(practice?' · practice':'')+'</p><div class="arena rise glow"><div class="big pop">'+G[g].f(v)+'</div>'+(practice?'<small>Practice only. Not scored.</small>':'')+'</div>';
+ var big='<h1 style="text-align:center">'+esc(pn(me))+'</h1><p class="sub" style="text-align:center;margin:-2px 0 12px">'+G[g].n+(practice?' · practice':'')+'</p><div class="arena result-'+g+' rise glow"><div class="big pop">'+G[g].f(v)+'</div>'+(practice?'<small>Practice only. Not scored.</small>':'')+'</div>';
  if(practice){A.innerHTML=big+'<button id="nx">Back to games</button>';document.getElementById("nx").onclick=home;return}
  send({t:"score",g:g,p:me,v:v});
  A.innerHTML=big+'<button id="sh">Send my result to the host</button><button class="alt" id="nx">See standings</button>';
@@ -251,14 +255,14 @@ function run(g,pr){view="play";practice=!!pr;
  document.getElementById("bk").onclick=home}
 function tapG(g){
  var n=0,t0=0,over=false;
- A.innerHTML='<div class="arena" id="ar"><div class="big" id="c">0</div><small id="tl">Tap to start!</small></div>';
+ A.innerHTML='<div class="arena tap-ar" id="ar"><div class="big" id="c">0</div><small id="tl">Tap to start!</small></div>';
  document.getElementById("ar").onpointerdown=function(e){e.preventDefault();if(over||(t0&&Date.now()-t0>=10000))return;
   if(!t0){t0=Date.now();tm=setInterval(function(){var l=10-(Date.now()-t0)/1000;
    if(l<=0){clearInterval(tm);over=true;fin(g,n)}else document.getElementById("tl").textContent=l.toFixed(1)+"s left"},50)}
   n++;var cc=document.getElementById("c");cc.textContent=n;ani(cc,"pop")}}
 function reactG(g){
  var ar,go=false,t0=0;
- A.innerHTML='<div class="arena" id="ar" style="background:#a8262c"><span id="m">Wait for green…</span></div>';
+ A.innerHTML='<div class="arena react-ar" id="ar" style="background:#a8262c"><span id="m">Wait for green…</span></div>';
  ar=document.getElementById("ar");
  function arm(){go=false;ar.style.background="#a8262c";document.getElementById("m").textContent="Wait for green…";
   tm=setTimeout(function(){ar.style.background="#2f9e5b";ani(ar,"glow");document.getElementById("m").textContent="TAP NOW!";requestAnimationFrame(function(){requestAnimationFrame(function(){t0=performance.now();go=true})})},2000+Math.random()*3500)}
@@ -268,7 +272,7 @@ function reactG(g){
  arm()}
 function stopG(g){
  var t0=Date.now();
- A.innerHTML='<div class="arena" id="ar"><div class="big" id="c">0.00</div><small>Tap when you hit 10.00 seconds</small></div>';
+ A.innerHTML='<div class="arena stop-ar" id="ar"><div class="big" id="c">0.00</div><small>Tap when you hit 10.00 seconds</small></div>';
  var c=document.getElementById("c");
  tm=setInterval(function(){var s=(Date.now()-t0)/1000;if(s>=2)c.textContent="?";else c.textContent=s.toFixed(2)},30);
  var d=false;document.getElementById("ar").onpointerdown=function(e){e.preventDefault();if(d)return;d=true;clearInterval(tm);var v=Math.abs((Date.now()-t0)/1000-10),ar=document.getElementById("ar");c.textContent="LOCKED";ani(ar,"glow");ani(c,"pop");tm=setTimeout(function(){fin(g,v)},400)}}
