@@ -1,144 +1,25 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JIALAT Christmas 2026 · Scoreboard</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a"><title>JIALAT 2026</title>
 <style>
-:root{--bg:#0a0a0a;--g:#d4af37;--l:#f3d77a;--d:#6b5a22;--t:#f2ead3}
+:root{--bg:#0a0a0a;--g:#d4af37;--l:#f3d77a;--d:#6b5a22;--m:#a08a45;--t:#f2ead3}
 *{box-sizing:border-box;margin:0}
-body{background:var(--bg);color:var(--t);font:700 15px/1.45 "Courier New",ui-monospace,monospace;letter-spacing:.04em;min-height:100vh}
-button{font:inherit;color:var(--t);background:#161616;border:3px solid var(--d);padding:10px 12px;box-shadow:3px 3px 0 #000;cursor:pointer;text-transform:uppercase;letter-spacing:.04em}
-button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
-button.on,button.go{border-color:var(--g);color:var(--l)}
-button.go{background:#2a2108}
-input{font:inherit;background:#111;color:var(--t);border:3px solid var(--d);padding:8px;width:100%}
-.dot{position:fixed;top:10px;right:10px;width:12px;height:12px;background:#555;z-index:5}.dot.ok{background:#5ad17a}.dot.bad{background:#e5484d}
-body.tv #H,body:not(.tv) #T{display:none}
-/* host */
-#H{max-width:860px;margin:auto;padding:14px}
-.hd{display:flex;justify-content:space-between;color:var(--g);font-size:17px;margin-bottom:10px}
-.lb{color:var(--d);font-size:12px;margin:12px 0 6px}.sm{color:var(--d);font-size:12px}
-.rw,.gd,.tabs{display:flex;flex-wrap:wrap;gap:8px}
-.gd button{flex:1 1 30%}.tabs button{flex:1;padding:10px 0}
-.card{border:3px solid var(--g);padding:14px;margin-top:12px;box-shadow:5px 5px 0 #000,5px 5px 0 1px var(--d)}
-.card h2{color:var(--l);margin:4px 0}.card p{color:#cfc6a8;font-weight:400;margin-bottom:6px}
-.msg{color:var(--l);margin-top:8px}
-details{margin-top:14px}summary{cursor:pointer;color:var(--g)}
-.nr{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin-top:6px}
-.nr button{padding:6px 12px}
-/* tv */
-#T{height:100vh;padding:3vh 4vw;text-align:center}
-#msg{height:100%;flex-direction:column;align-items:center;justify-content:center;gap:2.4vh}
-#bd{height:100%;flex-direction:column}
-#T h1{font-size:7vh;color:var(--l);text-shadow:.6vh .6vh 0 #000}
-.tag{border:.5vh solid var(--g);padding:.8vh 2vw;font-size:2.6vh;color:var(--g)}
-.rl{font-size:3.2vh;max-width:70vw;font-weight:400;color:#cfc6a8}
-.gr{display:flex;gap:2vw;flex-wrap:wrap;justify-content:center}
-.gb{border:.5vh solid var(--d);padding:1.4vh 2vw;font-size:2.8vh;background:#111}
-#T .sm{font-size:2.6vh}
-#ban{height:6vh;font-size:3.4vh;color:var(--l);margin-top:1vh}
-#rows{position:relative;flex:1;margin-top:1vh}
-.row{position:absolute;left:0;right:0;top:0;height:10%;transition:transform .9s steps(10)}
-.in{height:100%;padding:.5vh 0;display:flex;align-items:center;gap:2vw}
-.rk{width:6vh;font-size:4vh;color:var(--g)}
-.bar{flex:1;height:100%;border:.5vh solid var(--d);background:#111;position:relative;display:flex;align-items:center}
-.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--c);transition:width .9s steps(12)}
-.nm{position:relative;z-index:1;padding-left:2vw;font-size:3.6vh;text-shadow:.4vh .4vh 0 #000;display:flex;gap:1.2vw;align-items:center}
-.pt{width:11vh;font-size:4.4vh;color:var(--l);text-align:right}
-.z0{--c:#d4af37}.z1{--c:#7a6420}.z2{--c:#b5651d}.z3{--c:#a8262c}
-.hid .bar i{width:0!important}.hid .nm{color:#555}
-.hop .in{animation:hop .5s steps(4)}
-#lg{font-size:2vh;color:var(--d);margin-top:1vh}
-.bob{animation:bob 1s steps(2) infinite}.wob{animation:wob .6s steps(2) infinite}
-@keyframes hop{50%{transform:translateY(-1.4vh)}}@keyframes bob{50%{transform:translateY(-1.2vh)}}@keyframes wob{50%{transform:rotate(-8deg)}}
-.cf{position:fixed;top:-3vh;width:1.4vh;height:1.4vh;z-index:9;animation:fall linear forwards}
-@keyframes fall{to{transform:translateY(106vh)}}
+body{background:var(--bg);color:var(--t);font:700 15px/1.45 "Courier New",ui-monospace,monospace;letter-spacing:.04em;min-height:100vh;padding:calc(28px + env(safe-area-inset-top,0px)) 16px 28px;max-width:520px;margin:auto;text-align:center}
+h1{font-size:24px;color:var(--l);text-shadow:3px 3px 0 #000;margin:10px 0 4px}
+.sub{color:var(--m);font-weight:400;font-size:13px;margin-bottom:22px;text-transform:uppercase}
+.bob{animation:bob 1s steps(2) infinite}@keyframes bob{50%{transform:translateY(-6px)}}
+a.b{display:block;margin-top:14px;padding:16px 12px;border:3px solid var(--g);background:#2a2108;color:var(--l);text-decoration:none;text-transform:uppercase;box-shadow:5px 5px 0 #000,5px 5px 0 1px var(--d)}
+a.b:active{transform:translate(3px,3px);box-shadow:2px 2px 0 #000}
+a.b small{display:block;color:var(--m);font-weight:400;font-size:12px;margin-top:2px}
+.lb{color:var(--m);font-size:12px;margin:26px 0 4px;text-transform:uppercase}
+a.s{display:inline-block;margin:6px 4px 0;padding:10px 14px;border:3px solid var(--d);background:#161616;color:var(--t);text-decoration:none;text-transform:uppercase;box-shadow:3px 3px 0 #000}
+@media(prefers-reduced-motion:reduce){.bob{animation:none}}
 </style></head><body>
-<i id="dot" class="dot"></i>
-<div id="H"></div>
-<div id="T"><div id="msg"></div><div id="bd"><h1 id="th"></h1><div id="ban"></div><div id="rows"></div><div id="lg">1-6 SAFE · 7-9 NEXT YEAR'S ORGANISERS · 10 THE JIALAT TROPHY</div></div></div>
-<script>
-// ---- CONFIG: change the topic to anything long and random (host and TV share this file) ----
-const TOPIC='jialat26-k7q2m9x4vz', URL_='https://ntfy.sh/'+TOPIC;
-// ---- GAMES (edit rules text here if your PPT differs) ----
-const TAG={s:'SOLO · 10 → 1 PTS',p:'PAIRS · WIN 10 / OTHERS 5',t:'TEAMS · WIN 10 / LOSE 5'},EXP={s:55,p:60,t:75};
-const G=[
-{n:'Snow Blower',t:'s',r:'Blow the cotton balls off the cups with a party blower. First to clear all wins.'},
-{n:'Christmas Fan-Atic',t:'s',r:'Paper plate in your teeth. Fan the candle out. Fastest wins.'},
-{n:'Chimney Drop',t:'p',r:'Hold the ribbon with a candy cane in the middle. First pair to drop 3 into their bottle wins.',u:[[1,10],[2,9],[3,8],[4,7],[5,6]]},
-{n:'Merry Christmas',t:'s',r:'Blow out the tea lights while saying "Merry Christmas". Most lights out wins.'},
-{n:'Christmas Touchdown',t:'p',r:'Place the mini tree as far from the line as you can. Furthest wins.',u:[[1,9],[10,8],[2,7],[3,6],[4,5]]},
-{n:'Ribbon Racer',t:'s',r:'Unravel the rolled ribbon. First to finish wins.'},
-{n:'Ribbon Relay',t:'p',r:'Pass the ribbon to your partner by spinning. Fastest pair wins.',u:[[1,8],[9,7],[10,6],[2,5],[3,4]]},
-{n:'Reindeer Droppings',t:'t',r:'Carry ornaments between your legs into the basket. 90 seconds. Most wins.',u:[[1,3,5,7,9],[2,4,6,8,10]]},
-{n:'Christmas Tree Stack',t:'t',r:'Stack cups on your teammate. 60 seconds. Most cups wins.',u:[[1,4,6,8,9],[2,3,5,7,10]]}];
-// ---- pixel sprites ----
-const SP={tree:['....Y....','...GGG...','..GGGGG..','...GGG...','..GGGGG..','.GGGGGGG.','..GGGGG..','.GGGGGGGG','GGGGGGGGG','...BBB...'],
-trophy:['YYYYYYYYY','Y.YYYYY.Y','Y.YYYYY.Y','.YYYYYYY.','..YYYYY..','...YYY...','....Y....','...YYY...','..YYYYY..'],
-star:['....Y....','....Y....','...YYY...','YYYYYYYYY','.YYYYYYY.','..YYYYY..','..YY.YY..','.YY...YY.']};
-const C={Y:'#f3d77a',G:'#2f9e5b',B:'#8a5a2b'};
-function spr(k,px){const a=SP[k];let s='';a.forEach((r,y)=>[...r].forEach((c,x)=>{if(C[c])s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${C[c]}"/>`}));return `<svg viewBox="0 0 ${a[0].length} ${a.length}" width="${a[0].length*px}" height="${a.length*px}" shape-rendering="crispEdges">${s}</svg>`}
-// ---- state ----
-const D=()=>({v:0,g:0,m:['idle'],nm:Array.from({length:10},(_,i)=>'Player '+(i+1)),sc:Array.from({length:10},()=>Array(9).fill(null)),tb:Array(10).fill(0),o:Array.from({length:9},()=>[])});
-let S=D();try{const x=localStorage.getItem('jialat26');if(x)S=Object.assign(D(),JSON.parse(x))}catch(e){}
-const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const rn=i=>S.nm[i]||'P'+(i+1),nm=i=>esc(rn(i));
-const ROLE=(location.hash.match(/host|tv/)||[''])[0];
-const save=()=>{try{localStorage.setItem('jialat26',JSON.stringify(S))}catch(e){}};
-const dot=ok=>{$('dot').className='dot '+(ok?'ok':'bad')};
-let pt;function push(){clearTimeout(pt);pt=setTimeout(()=>{fetch(URL_,{method:'POST',body:JSON.stringify(S)}).then(r=>dot(r.ok)).catch(()=>dot(0))},250)}
-function commit(){S.v=Date.now();save();render();push()}
-function conn(){try{const e=new EventSource(URL_+'/sse?since=latest');e.onopen=()=>dot(1);e.onerror=()=>dot(0);
-e.onmessage=ev=>{try{const j=JSON.parse(ev.data);if(j.event!=='message')return;const x=JSON.parse(j.message);if(x&&x.v>S.v){S=Object.assign(D(),x);save();render()}}catch(_){}}}catch(_){dot(0)}}
-function stand(n){const t=S.sc.map((r,i)=>({i,t:r.slice(0,n).reduce((a,v)=>a+(v||0),0),b:S.tb[i]||0}));t.sort((a,b)=>b.t-a.t||b.b-a.b||a.i-b.i);t.forEach((o,k)=>o.r=k+1);return t}
-const allDone=()=>S.sc.every(r=>r.every(v=>v!=null));
-// ---- scoring actions ----
-function solo(g,i){const o=S.o[g];if(o.includes(i))return;o.push(i);S.sc[i][g]=11-o.length;commit()}
-function undo(g){const i=S.o[g].pop();if(i!=null)S.sc[i][g]=null;commit()}
-function clr(g){S.o[g]=[];S.sc.forEach(r=>r[g]=null);commit()}
-function win(g,k){G[g].u.forEach((u,j)=>u.forEach(p=>S.sc[p-1][g]=j==k?10:5));commit()}
-function sg(i){S.g=i;if(S.m[0]=='rules')S.m=['rules',i];commit()}
-function tvm(m){S.m=m;commit()}
-function rv(d){S.m=['rev',Math.max(0,Math.min(10,(S.m[1]||0)+d))];commit()}
-function nn(i,v){S.nm[i]=v.trim().slice(0,14);commit()}
-function tbb(i,d){S.tb[i]=Math.max(0,(S.tb[i]||0)+d);commit()}
-function reset(){if(confirm('Reset ALL scores? Names are kept.')){const n=S.nm;S=D();S.nm=n;commit()}}
-function copyRes(){const t='🎄 JIALAT Christmas 2026\n'+stand(9).map(o=>`${o.r}. ${rn(o.i)} - ${o.t}`).join('\n');navigator.clipboard.writeText(t).catch(()=>prompt('Copy:',t))}
-// ---- host ----
-function host(){const g=S.g,x=G[g],done=G.map((_,i)=>S.sc.every(r=>r[i]!=null)),m=S.m;
-const btn=[['Title',['idle']],['Rules',['rules',g]],['After G3',['board',3]],['After G6',['board',6]],['Live',['board',9]],['Final reveal',['rev',0]]];
-let h=`<div class="hd"><b>JIALAT 2026 · HOST</b></div><div class="lb">TV SHOWS</div><div class="rw">${btn.map(([l,mm])=>`<button class="${m[0]==mm[0]&&(m[0]!='board'||m[1]==mm[1])?'on':''}" onclick='tvm(${JSON.stringify(mm)})'>${l}</button>`).join('')}</div>`;
-if(m[0]=='rev')h+=`<div class="rw" style="margin-top:8px"><button onclick="rv(-1)">◀ Back</button><button class="go" onclick="rv(1)">Next ▶ (${m[1]}/10)</button></div>`;
-h+=`<div class="lb">GAME</div><div class="tabs">${G.map((_,i)=>`<button class="${i==g?'on':''}" onclick="sg(${i})">${i+1}${done[i]?'✓':''}</button>`).join('')}</div>`;
-let c=`<div class="card"><div class="sm">GAME ${g+1} · ${TAG[x.t]}</div><h2>${x.n}</h2><p>${x.r}</p>`;
-if(x.t=='s')c+=`<div class="lb">TAP IN FINISHING ORDER</div><div class="gd">${[...Array(10)].map((_,i)=>{const k=S.o[g].indexOf(i);return `<button class="${k>=0?'on':''}" onclick="solo(${g},${i})">${k>=0?(k+1)+'. ':''}${nm(i)}${k>=0?' +'+(10-k):''}</button>`}).join('')}</div>`;
-else c+=`<div class="lb">TAP THE WINNING ${x.t=='p'?'PAIR':'TEAM'}</div><div class="gd">${x.u.map((u,k)=>{const w=S.sc[u[0]-1][g]===10;return `<button class="${w?'on':''}" onclick="win(${g},${k})">${x.t=='t'?'TEAM '+'AB'[k]+': ':''}${u.map(p=>nm(p-1)).join(x.t=='t'?', ':' & ')}${w?' ★':''}</button>`}).join('')}</div>`;
-const sum=S.sc.reduce((a,r)=>a+(r[g]||0),0);
-c+=`<div class="rw" style="margin-top:10px"><button onclick="undo(${g})" ${x.t=='s'?'':'disabled style="opacity:.3"'}>Undo</button><button onclick="clr(${g})">Clear game</button></div><div class="sm" style="margin-top:8px">POINTS GIVEN ${sum} / ${EXP[x.t]} ${sum==EXP[x.t]?'✓':''}</div></div>`;
-h+=c;
-const st=stand(9),ties=allDone()?st.filter((o,k)=>(k>0&&st[k-1].t==o.t&&st[k-1].b==o.b)).map(o=>o.r-1):[];
-h+=`<div class="lb">STANDINGS</div><div style="line-height:1.8">${st.map(o=>`${o.r}. ${nm(o.i)} <b style="color:var(--l)">${o.t}</b>`).join(' · ')}</div>`;
-if(ties.length)h+=`<div class="msg">TIE FOR PLACE ${ties.join(', ')}: replay Snow Blower, then give the winner a +1 tie-break below.</div>`;
-h+=`<div class="rw" style="margin-top:10px"><button onclick="copyRes()">Copy results</button></div>
-<details><summary>NAMES &amp; TIE-BREAK</summary>${S.nm.map((n,i)=>`<div class="nr"><input value="${esc(n)}" maxlength="14" onchange="nn(${i},this.value)"><button onclick="tbb(${i},-1)">−</button><span>${S.tb[i]||0}</span><button onclick="tbb(${i},1)">+</button></div>`).join('')}<div class="rw" style="margin-top:12px"><button onclick="reset()">Reset all scores</button></div></details>`;
-$('H').innerHTML=h}
-// ---- tv ----
-const rows=[];
-function mkRows(){for(let i=0;i<10;i++){const d=document.createElement('div');d.className='row';d.innerHTML='<div class="in"><b class="rk"></b><div class="bar"><i></i><span class="nm"></span></div><b class="pt"></b></div>';$('rows').appendChild(d);rows.push(d)}}
-function confetti(){for(let k=0;k<80;k++){const s=document.createElement('span');s.className='cf';s.style.cssText=`left:${Math.random()*100}vw;background:${['#f3d77a','#d4af37','#fff','#2f9e5b','#e5484d'][k%5]};animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*1.5}s`;document.body.appendChild(s);setTimeout(()=>s.remove(),7000)}}
-let lastRev=-1;
-function tv(){const m=S.m,b=m[0]=='board'||m[0]=='rev';$('bd').style.display=b?'flex':'none';$('msg').style.display=b?'none':'flex';
-if(!b){lastRev=-1;if(m[0]=='rules'){const x=G[m[1]];$('msg').innerHTML=`<div class="bob">${spr('star',6)}</div><div class="sm">GAME ${m[1]+1} / 9</div><h1>${x.n}</h1><div class="tag">${TAG[x.t]}</div><p class="rl">${esc(x.r)}</p><div class="gr">${x.u?x.u.map((u,k)=>`<div class="gb">${x.t=='t'?'TEAM '+'AB'[k]+'<br>':''}${u.map(p=>nm(p-1)).join(x.t=='t'?' · ':' &amp; ')}</div>`).join(''):''}</div>`}
-else $('msg').innerHTML=`<div class="bob">${spr('tree',8)}</div><h1>JIALAT CHRISTMAS 2026</h1><div class="tag">18 YEARS · 10 FRIENDS · 9 GAMES</div>`;return}
-const rev=m[0]=='rev',k=rev?m[1]:10,n=rev?9:m[1],fin=rev||(n>=9&&allDone()),st=stand(n),top=Math.max(1,st[0].t);
-$('th').textContent=rev?'THE FINAL VERDICT':n>=9?(fin?'FINAL STANDINGS':'LIVE STANDINGS'):'AFTER GAME '+n;
-$('ban').textContent=!rev?'':k==10?'👑 CHAMPION: '+rn(st[0].i).toUpperCase():k>=4?"NEXT YEAR'S ORGANISERS: "+[6,7,8].map(j=>rn(st[j].i)).join(' · ').toUpperCase():k>=1?'THE JIALAT TROPHY GOES TO '+rn(st[9].i).toUpperCase():'';
-st.forEach(o=>{const d=rows[o.i],hide=rev&&o.r<=10-k,z=o.r==10?3:o.r>=7?2:o.r==1?0:1,old=d.dataset.r;
-d.style.transform=`translateY(${(o.r-1)*100}%)`;d.className='row z'+z+(hide?' hid':'');
-if(old&&old!=o.r&&!hide){d.classList.add('hop')}d.dataset.r=o.r;
-d.querySelector('.rk').textContent=o.r;d.querySelector('.nm').innerHTML=hide?'???':esc(rn(o.i))+(fin&&o.r==10?`<span class="wob">${spr('trophy',3)}</span>`:fin&&o.r>=7&&o.r<10?'<small>ORGANISER</small>':'');
-d.querySelector('i').style.width=hide?'0':(o.t/top*100)+'%';d.querySelector('.pt').textContent=hide?'':o.t});
-if(rev&&k==10&&lastRev!=10)confetti();lastRev=rev?k:-1}
-// ---- boot ----
-function render(){document.body.className=ROLE;if(ROLE=='host')host();else if(ROLE=='tv')tv();else $('H').innerHTML='<div class="hd"><b>JIALAT CHRISTMAS 2026</b></div><div class="rw"><button class="go" onclick="location.hash=\'host\';location.reload()">iPad · Host</button><button class="go" onclick="location.hash=\'tv\';location.reload()">MacBook · TV</button></div>'}
-if(ROLE=='tv'){mkRows();$('T').ondblclick=()=>document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}
-render();if(ROLE)conn();
-</script></body></html>
+<div class="bob"><svg viewBox="0 0 9 10" width="54" height="60" shape-rendering="crispEdges" aria-hidden="true" fill="#f3d77a"><path d="M4 0h1v1H4zM3 1h3v1H3zM2 2h5v1H2zM3 3h3v1H3zM2 4h5v1H2zM1 5h7v1H1zM2 6h5v1H2zM0 7h9v1H0zM0 8h9v1H0z" fill="#2f9e5b"/><path d="M4 0h1v1H4z"/><path d="M3 9h3v1H3z" fill="#8a5a2b"/></svg></div>
+<h1>JIALAT 2026</h1>
+<p class="sub">18 years · 10 friends</p>
+<a class="b" href="roomwars/">Room Wars<small>Players: join the room game</small></a>
+<a class="b" href="scoreboard/">Scoreboard<small>Christmas Night games</small></a>
+<p class="lb">Organiser only</p>
+<a class="s" href="scoreboard/#host">iPad · Host</a><a class="s" href="scoreboard/#tv">MacBook · TV</a>
+</body></html>
