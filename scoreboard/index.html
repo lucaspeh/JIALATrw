@@ -42,6 +42,17 @@ body.landing .dot{display:none}
 details{margin-top:14px}summary{cursor:pointer;color:var(--g)}
 .nr{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin-top:6px}
 .nr button{padding:6px 12px}
+.clock{font-size:clamp(30px,8vw,58px);color:var(--l);font-variant-numeric:tabular-nums;margin:8px 0}
+.turn{border:2px solid var(--d);padding:12px;margin:10px 0;background:#111}
+.turn .rw button{flex:1 1 190px;min-height:58px}
+.results{display:grid;gap:7px;margin-top:10px}
+.result{display:grid;grid-template-columns:minmax(0,1fr) minmax(104px,150px) auto;align-items:center;gap:8px}
+.result input{font-variant-numeric:tabular-nums}
+.result b{min-width:52px;text-align:right;color:var(--l)}
+.result .who{overflow-wrap:anywhere}
+.hint{color:#cfc6a8;font-size:12px;font-weight:400;margin-top:8px}
+.warn{color:#f3d77a;margin-top:8px}
+@media(max-width:440px){.result{grid-template-columns:minmax(0,1fr) 100px auto}.result b{min-width:34px}}
 /* tv */
 #T{height:100vh;padding:3vh 4vw;text-align:center}
 #msg{height:100%;flex-direction:column;align-items:center;justify-content:center;gap:2.4vh}
@@ -82,7 +93,7 @@ const G=[
 {n:'Snow Blower',t:'s',r:'Clear one cotton ball from each of five upside-down cups using only a party blower. Fastest wins.'},
 {n:'Christmas Fan-Atic',t:'s',r:'Hold a paper plate by its edge with your mouth. Fan the candle out by moving your head. No direct blowing. Fastest wins.'},
 {n:'Chimney Drop',t:'p',r:'Each partner holds one end of a ribbon. Lower the hanging candy cane into a bottle three times. Fastest pair wins.',u:[[1,10],[2,9],[3,8],[4,7],[5,6]]},
-{n:'Merry Christmas Candle Challenge',t:'s',r:'Say “Merry Christmas!” in one breath towards eight tea lights. Most candles extinguished wins.'},
+{n:'Merry Christmas Candle Challenge',t:'s',r:'Say “Merry Christmas!” in one breath towards eight tea lights. Most candles extinguished wins; equal counts share points.'},
 {n:'Christmas Touchdown',t:'p',r:'One partner places the mini tree while the other supports their balance. Neither crosses the line. Farthest valid placement wins.',u:[[1,9],[10,8],[2,7],[3,6],[4,5]]},
 {n:'Ribbon Racer',t:'s',r:'Unroll the entire identical streamer without tearing or cutting it. Fastest complete unroll wins.'},
 {n:'Ribbon Relay',t:'p',r:'Transfer the loosely wrapped ribbon from Partner A to Partner B by spinning. Fastest complete transfer wins.',u:[[1,8],[9,7],[10,6],[2,5],[3,4]]},
@@ -96,8 +107,10 @@ medal:['...YYY...','..YYYYY..','.YYYYYYY.','.YYY.YYY.','..YYYYY..','...YYY...','
 const C={Y:'#f3d77a',G:'#2f9e5b',B:'#8a5a2b'};
 function spr(k,px){const a=SP[k];let s='';a.forEach((r,y)=>[...r].forEach((c,x)=>{if(C[c])s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${C[c]}"/>`}));return `<svg viewBox="0 0 ${a[0].length} ${a.length}" width="${a[0].length*px}" height="${a.length*px}" shape-rendering="crispEdges">${s}</svg>`}
 // ---- state ----
-const D=()=>({v:0,g:0,m:['idle'],nm:Array.from({length:10},(_,i)=>'Player '+(i+1)),sc:Array.from({length:10},()=>Array(9).fill(null)),tb:Array(10).fill(0),o:Array.from({length:9},()=>[])});
+const D=()=>({v:0,g:0,m:['idle'],nm:Array.from({length:10},(_,i)=>'Player '+(i+1)),sc:Array.from({length:10},()=>Array(9).fill(null)),tb:Array(10).fill(0),rs:Array.from({length:9},()=>[]),ow:Array(9).fill(null)});
 let S=D();try{const x=localStorage.getItem('jialat26');if(x)S=Object.assign(D(),JSON.parse(x))}catch(e){}
+if(!Array.isArray(S.rs)||S.rs.length!==9)S.rs=D().rs;
+if(!Array.isArray(S.ow)||S.ow.length!==9)S.ow=D().ow;
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const rn=i=>S.nm[i]||'P'+(i+1),nm=i=>esc(rn(i));
 const ROLE=(location.hash.match(/host|tv/)||[''])[0];
@@ -110,19 +123,114 @@ e.onmessage=ev=>{try{const j=JSON.parse(ev.data);if(j.event!=='message')return;c
 function stand(n){const t=S.sc.map((r,i)=>({i,t:r.slice(0,n).reduce((a,v)=>a+(v||0),0),b:S.tb[i]||0}));t.sort((a,b)=>b.t-a.t||b.b-a.b||a.i-b.i);t.forEach((o,k)=>o.r=k+1);return t}
 const allDone=()=>S.sc.every(r=>r.every(v=>v!=null));
 const unresolvedTie=()=>{const st=stand(9);return st.some((o,i)=>i>0&&o.t===st[i-1].t&&o.b===st[i-1].b)};
-// ---- scoring actions ----
-function solo(g,i){const o=S.o[g];if(o.includes(i))return;o.push(i);S.sc[i][g]=11-o.length;commit()}
-function undo(g){const i=S.o[g].pop();if(i!=null)S.sc[i][g]=null;commit()}
-function clr(g){S.o[g]=[];S.sc.forEach(r=>r[g]=null);commit()}
-function win(g,k){G[g].u.forEach((u,j)=>u.forEach(p=>S.sc[p-1][g]=j==k?10:5));commit()}
-function sg(i){S.g=i;if(S.m[0]=='rules')S.m=['rules',i];commit()}
+// ---- game results: timed races, measured distance and fixed-duration counts ----
+const MODE=['time','time','time','count','distance','time','time','count','count'];
+const LIMIT={7:90,8:60};
+const units={time:'seconds',distance:'cm',count:'successful'};
+let Q=null,beeper=null;
+const size=g=>G[g].t=='s'?10:G[g].t=='p'?5:2;
+const vals=g=>{if(!Array.isArray(S.rs[g]))S.rs[g]=[];return S.rs[g]};
+const value=(g,i)=>vals(g)[i]??null;
+const filled=g=>Array.from({length:size(g)},(_,i)=>value(g,i)).filter(v=>v!==null).length;
+const completed=g=>filled(g)===size(g);
+const better=(g,a,b)=>MODE[g]=='time'?a<b:a>b;
+const label=(g,i)=>G[g].t=='s'?nm(i):G[g].t=='t'?'TEAM '+'AB'[i]+': '+G[g].u[i].map(p=>nm(p-1)).join(', '):G[g].u[i].map(p=>nm(p-1)).join(' &amp; ');
+const shown=(g,v)=>v===null?'':MODE[g]=='time'?Number(v).toFixed(2):String(v);
+function leaders(g){if(!completed(g))return [];let best=value(g,0);for(let i=1;i<size(g);i++)if(better(g,value(g,i),best))best=value(g,i);return Array.from({length:size(g)},(_,i)=>i).filter(i=>value(g,i)===best)}
+function recalc(g){
+ S.sc.forEach(r=>r[g]=null);
+ if(!completed(g))return;
+ if(G[g].t=='s'){
+  const a=Array.from({length:10},(_,i)=>({i,v:value(g,i)})).sort((a,b)=>MODE[g]=='time'?a.v-b.v:b.v-a.v);
+  for(let k=0;k<10;){let end=k+1;while(end<10&&a[end].v===a[k].v)end++;
+   const points=10-k-(end-k-1)/2;for(let j=k;j<end;j++)S.sc[a[j].i][g]=points;k=end}
+ }else{
+  const top=leaders(g),w=top.length===1?top[0]:S.ow[g];
+  if(w===null||!top.includes(w))return;
+  G[g].u.forEach((u,i)=>u.forEach(p=>S.sc[p-1][g]=i===w?10:5));
+ }
+}
+function setResult(g,i,raw,fromTimer=false){
+ if(g<0||g>8||i<0||i>=size(g))return;
+ let v=null;
+ if(String(raw).trim()!==''){
+  v=Number(raw);
+  const ok=Number.isFinite(v)&&v>=0&&(MODE[g]!='time'||v>0)&&(MODE[g]!='count'||Number.isInteger(v))&&(g!==3||v<=8);
+  if(!ok){alert(g===3?'Enter a whole number from 0 to 8.':'Enter a valid '+units[MODE[g]]+' result.');host();return}
+  if(MODE[g]=='time')v=Math.round(v*100)/100;
+  if(MODE[g]=='distance')v=Math.round(v*10)/10;
+ }
+ vals(g)[i]=v;S.ow[g]=null;
+ if(Q&&Q.g===g&&!fromTimer)Q=null;
+ recalc(g);commit();
+}
+function chooseWinner(g,i){if(!leaders(g).includes(i))return;S.ow[g]=i;recalc(g);commit()}
+function clr(g){
+ if((filled(g)||S.sc.some(r=>r[g]!==null))&&!confirm('Clear every result and score for this game?'))return;
+ if(Q&&Q.g===g)Q=null;S.rs[g]=[];S.ow[g]=null;S.sc.forEach(r=>r[g]=null);commit()
+}
+function sg(i){if(Q&&Q.g!==i){if(!confirm('Cancel the running timer and switch games?'))return;Q=null}S.g=i;if(S.m[0]=='rules')S.m=['rules',i];commit()}
+function startTimer(g){
+ if(Q||MODE[g]!=='time'&&!LIMIT[g])return;
+ const open=Array.from({length:size(g)},(_,i)=>i).filter(i=>value(g,i)===null);
+ if(!open.length)return;
+ Q={g,slots:open.slice(0,MODE[g]=='time'&&G[g].t=='s'?2:1),start:performance.now(),ends:[],expired:false};
+ if(LIMIT[g]){try{beeper=beeper||new (window.AudioContext||window.webkitAudioContext)();beeper.resume()}catch(e){}}
+ host()
+}
+function finishTimer(j){
+ if(!Q||MODE[Q.g]!=='time'||Q.ends[j]!=null)return;
+ const g=Q.g,i=Q.slots[j],v=Math.max(.01,Math.round((performance.now()-Q.start)/10)/100);
+ Q.ends[j]=v;if(Q.ends.filter(x=>x!=null).length===Q.slots.length)Q=null;
+ setResult(g,i,v,true)
+}
+function cancelTimer(){Q=null;host()}
+function beep(){try{if(!beeper)return;const o=beeper.createOscillator(),a=beeper.createGain();o.connect(a);a.connect(beeper.destination);o.frequency.value=880;a.gain.value=.15;o.start();o.stop(beeper.currentTime+.4)}catch(e){}}
+function tick(){
+ if(!Q)return;
+ const elapsed=performance.now()-Q.start,left=LIMIT[Q.g]?Math.max(0,LIMIT[Q.g]*1000-elapsed):elapsed;
+ const c=$('clock');if(c)c.textContent=(left/1000).toFixed(LIMIT[Q.g]?1:2)+'s';
+ if(LIMIT[Q.g]&&!Q.expired&&left<=0){Q.expired=true;beep();host()}
+}
+setInterval(tick,50);
 function tvm(m){if(m[0]=='rev'&&(!allDone()||unresolvedTie()))return;S.m=m;commit()}
 function rv(d){S.m=['rev',Math.max(0,Math.min(10,(S.m[1]||0)+d))];commit()}
 function nn(i,v){S.nm[i]=v.trim().slice(0,14);commit()}
 function tbb(i,d){S.tb[i]=Math.max(0,(S.tb[i]||0)+d);commit()}
-function reset(){if(confirm('Reset ALL scores? Names are kept.')){const n=S.nm;S=D();S.nm=n;commit()}}
+function reset(){if(confirm('Reset ALL scores? Names are kept.')){const n=S.nm;Q=null;S=D();S.nm=n;commit()}}
 function copyRes(){const t='🎄 JIALAT Christmas 2026\n'+stand(9).map(o=>`${o.r}. ${rn(o.i)} - ${o.t}`).join('\n');navigator.clipboard.writeText(t).catch(()=>prompt('Copy:',t))}
 // ---- host ----
+function resultPanel(g){
+ const mode=MODE[g],x=G[g],n=size(g),a=vals(g);
+ const next=Array.from({length:n},(_,i)=>i).filter(i=>value(g,i)===null);
+ let h='';
+ if(mode=='time'||LIMIT[g]){
+  const active=Q&&Q.g===g,slots=active?Q.slots:next.slice(0,mode=='time'&&x.t=='s'?2:1);
+  h+='<div class="turn"><div class="lb">NEXT TURN</div>';
+  if(!active)h+=slots.length?'<div>'+slots.map(i=>label(g,i)).join(' <span style="color:var(--g)">vs</span> ')+'</div><div class="rw" style="margin-top:10px"><button class="go" onclick="startTimer('+g+')">Start '+(LIMIT[g]?LIMIT[g]+'s countdown':'timer')+'</button></div>':'<div>All results recorded. Edit a result below to correct or replay it.</div>';
+  else{
+   h+='<div>'+slots.map(i=>label(g,i)).join(' <span style="color:var(--g)">vs</span> ')+'</div><div class="clock" id="clock">'+(LIMIT[g]?LIMIT[g].toFixed(1):'0.00')+'s</div>';
+   if(mode=='time')h+='<div class="rw">'+slots.map((i,j)=>'<button class="'+(Q.ends[j]!=null?'on':'go')+'" onclick="finishTimer('+j+')" '+(Q.ends[j]!=null?'disabled':'')+'>'+(Q.ends[j]!=null?'Saved '+shown(g,Q.ends[j])+'s':'Finish '+label(g,i))+'</button>').join('')+'</div>';
+   if(LIMIT[g])h+='<div class="'+(Q.expired?'warn':'hint')+'">'+(Q.expired?'TIME! Count the successful items and enter the result below.':'Count the successful items when the clock reaches zero.')+'</div>';
+   h+='<div class="rw" style="margin-top:10px"><button onclick="cancelTimer()">Reset turn timer</button></div>';
+  }
+  h+='</div>';
+ }
+ h+='<div class="lb">RECORD '+(mode=='time'?'TIME IN SECONDS':mode=='distance'?'DISTANCE IN CM':'SUCCESSFUL COUNT')+' · '+filled(g)+' / '+n+'</div>';
+ if(g===3)h+='<div class="hint">Tied candle counts share the points for those places. No replay needed.</div>';
+ if(mode=='time')h+='<div class="hint">One observer taps Finish for each player or pair. Hand them this device if you are playing. Correct any time below if needed.</div>';
+ if(LIMIT[g])h+='<div class="hint">Enter each team’s count after its countdown. The page picks the higher count.</div>';
+ h+='<div class="results">'+Array.from({length:n},(_,i)=>{
+  const p=x.t=='s'?S.sc[i][g]:x.u?S.sc[x.u[i][0]-1][g]:null;
+  return '<label class="result"><span class="who">'+label(g,i)+'</span><input type="number" inputmode="decimal" min="'+(mode=='time'?'0.01':'0')+'" '+(g===3?'max="8" ':'')+'step="'+(mode=='count'?'1':mode=='time'?'0.01':'0.1')+'" value="'+shown(g,value(g,i))+'" aria-label="'+(mode=='time'?'Seconds':mode=='distance'?'Centimetres':'Count')+' for '+esc(x.t=='s'?rn(i):x.t=='t'?'Team '+'AB'[i]:'pair '+(i+1))+'" onchange="setResult('+g+','+i+',this.value)"><b>'+(p===null?'': '+'+p)+'</b></label>'
+ }).join('')+'</div>';
+ if(completed(g)&&x.t!=='s'){
+  const top=leaders(g);
+  if(top.length>1)h+='<div class="warn">Top result is tied. Replay the tied '+(x.t=='p'?'pairs':'teams')+', then select the winner:</div><div class="rw" style="margin-top:8px">'+top.map(i=>'<button class="'+(S.ow[g]===i?'on':'')+'" onclick="chooseWinner('+g+','+i+')">'+label(g,i)+'</button>').join('')+'</div>';
+  else h+='<div class="msg">Winner: '+label(g,top[0])+'</div>';
+ }
+ return h;
+}
 function host(){const g=S.g,x=G[g],done=G.map((_,i)=>S.sc.every(r=>r[i]!=null)),m=S.m,ready=allDone()&&!unresolvedTie();
 const btn=[['Title',['idle']],['Rules',['rules',g]],['After G3',['board',3]],['After G6',['board',6]],['Live',['board',9]],['Final reveal',['rev',0]]];
 let h=`<div class="hd"><b><span class="host-icon" aria-hidden="true">${spr('tally',3)}</span>JIALAT 2026 · HOST</b></div><div class="lb">TV SHOWS</div><div class="rw">${btn.map(([l,mm])=>`<button class="${m[0]==mm[0]&&(m[0]!='board'||m[1]==mm[1])?'on':''}" onclick='tvm(${JSON.stringify(mm)})' ${l==='Final reveal'&&!ready?'disabled title="Complete all games and settle ties first"':''}>${l}</button>`).join('')}</div>`;
@@ -130,10 +238,9 @@ if(!ready)h+=`<div class="sm" style="margin-top:8px">Final reveal unlocks after 
 if(m[0]=='rev')h+=`<div class="rw" style="margin-top:8px"><button onclick="rv(-1)">◀ Back</button><button class="go" onclick="rv(1)">Next ▶ (${m[1]}/10)</button></div>`;
 h+=`<div class="lb">GAME</div><div class="tabs">${G.map((_,i)=>`<button class="${i==g?'on':''}" onclick="sg(${i})">${i+1}${done[i]?'✓':''}</button>`).join('')}</div>`;
 let c=`<div class="card"><div class="sm">GAME ${g+1} · ${TAG[x.t]}</div><h2>${x.n}</h2><p>${x.r}</p>`;
-if(x.t=='s')c+=`<div class="lb">TAP IN FINISHING ORDER</div><div class="gd">${[...Array(10)].map((_,i)=>{const k=S.o[g].indexOf(i);return `<button class="${k>=0?'on':''}" onclick="solo(${g},${i})">${k>=0?(k+1)+'. ':''}${nm(i)}${k>=0?' +'+(10-k):''}</button>`}).join('')}</div>`;
-else c+=`<div class="lb">TAP THE WINNING ${x.t=='p'?'PAIR':'TEAM'}</div><div class="gd">${x.u.map((u,k)=>{const w=S.sc[u[0]-1][g]===10;return `<button class="${w?'on':''}" onclick="win(${g},${k})">${x.t=='t'?'TEAM '+'AB'[k]+': ':''}${u.map(p=>nm(p-1)).join(x.t=='t'?', ':' & ')}${w?' ★':''}</button>`}).join('')}</div>`;
+c+=resultPanel(g);
 const sum=S.sc.reduce((a,r)=>a+(r[g]||0),0);
-c+=`<div class="rw" style="margin-top:10px"><button onclick="undo(${g})" ${x.t=='s'?'':'disabled style="opacity:.3"'}>Undo</button><button onclick="clr(${g})">Clear game</button></div><div class="sm" style="margin-top:8px">POINTS GIVEN ${sum} / ${EXP[x.t]} ${sum==EXP[x.t]?'✓':''}</div></div>`;
+c+=`<div class="rw" style="margin-top:10px"><button onclick="clr(${g})">Clear game</button></div><div class="sm" style="margin-top:8px">POINTS GIVEN ${sum} / ${EXP[x.t]} ${sum==EXP[x.t]?'✓':''}</div></div>`;
 h+=c;
 const st=stand(9),ties=allDone()?st.filter((o,k)=>(k>0&&st[k-1].t==o.t&&st[k-1].b==o.b)).map(o=>o.r-1):[];
 h+=`<div class="lb">STANDINGS</div><div style="line-height:1.8">${st.map(o=>`${o.r}. ${nm(o.i)} <b style="color:var(--l)">${o.t}</b>`).join(' · ')}</div>`;
