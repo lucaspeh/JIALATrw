@@ -70,7 +70,7 @@ function zc(i){return i==0?0:i==4?3:i==3?2:1}
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}return null}
 function pn(i){return S.names[i]}
 function cn(c){return pn(c*2)+" & "+pn(c*2+1)}
-function link(){return location.href.split("#")[0]+"#"+code+(S.names?"~"+encodeURIComponent(JSON.stringify(S.names)):"")}
+function link(){var base=location.href.split("#")[0];return base+(base.indexOf("?")<0?"?":"&")+"v=6#"+code+(S.names?"~"+encodeURIComponent(JSON.stringify(S.names)):"")}
 function I(x,a,b){return typeof x=="number"&&x%1===0&&x>=a&&x<=b}
 function F(x){return typeof x=="number"&&isFinite(x)}
 function strs(a,n){return Array.isArray(a)&&a.length==n&&a.every(function(x){return typeof x=="string"})}
@@ -90,7 +90,7 @@ function apply(m){
  if(view=="home"||view=="wait"||view=="who"||view=="final"||view=="picking")rq()}
 var rt=null,RV=["home","wait","who","final","picking"];
 function rq(){if(rt)return;rt=setTimeout(function(){rt=null;if(RV.indexOf(view)>=0)try{render()}catch(e){}},80)}
-var out=[],posting=false,postRetry=null,pollTimer=null,polling=false,pollOk=false,cursor="",seen={},seenOrder=[],postFailed=false;
+var out=[],posting=false,postRetry=null,pollTimer=null,polling=false,pollOk=false,cursor="",seen={},seenOrder=[],postFailed=false,postError="";
 function mark(id){if(!id||seen[id])return false;seen[id]=true;seenOrder.push(id);if(seenOrder.length>500)delete seen[seenOrder.shift()];return true}
 function remember(){try{localStorage.setItem("rwq-"+code,JSON.stringify(out))}catch(e){}}
 function send(m){
@@ -100,9 +100,10 @@ function send(m){
 async function post(){
  if(posting||!out.length)return;
  posting=true;var m=out[0],ctrl=new AbortController(),limit=setTimeout(function(){ctrl.abort()},8000);
- try{var r=await fetch(BASE+"rw-"+code,{method:"POST",body:JSON.stringify(m),signal:ctrl.signal});if(!r.ok)throw Error("HTTP "+r.status);
-  out.shift();remember();postFailed=false;clearTimeout(postRetry);postRetry=null;
- }catch(e){postFailed=true;clearTimeout(postRetry);postRetry=setTimeout(post,5000)}
+ try{var r=await fetch(BASE+"rw-"+code,{method:"POST",body:JSON.stringify(m),signal:ctrl.signal});if(!r.ok){var e=Error("HTTP "+r.status);e.status=r.status;e.retryAfter=Number(r.headers.get("Retry-After"))||0;throw e}
+  out.shift();remember();postFailed=false;postError="";clearTimeout(postRetry);postRetry=null;
+ }catch(e){postFailed=true;postError=e.status===429?"Relay limit (429)":e.status?"Relay HTTP "+e.status:"Network request failed";
+  clearTimeout(postRetry);postRetry=setTimeout(post,e.status===429?Math.max(5000,Math.min(1800000,e.retryAfter*1000||30000)):5000)}
  finally{clearTimeout(limit);posting=false;stat();if(out.length&&!postRetry)post()}}
 function incoming(d){
  if(!d||d.event!="message")return;
@@ -122,15 +123,14 @@ async function poll(){if(polling||document.hidden)return;polling=true;
 function connect(){
  if(es)es.close();
  try{es=new EventSource(BASE+"rw-"+code+"/sse?since="+encodeURIComponent(cursor||"all"));
-  es.onopen=function(){on=true;fl=false;stat()};
-  es.onerror=function(){on=false;fl=true;stat();poll()};
+  es.onopen=function(){on=true;fl=false;stat();if(pollTimer){clearInterval(pollTimer);pollTimer=null}};
+  es.onerror=function(){on=false;fl=true;stat();if(!pollTimer)pollTimer=setInterval(poll,60000);poll()};
   es.addEventListener("message",function(e){try{incoming(JSON.parse(e.data))}catch(x){}})
- }catch(e){on=false;fl=true;stat();poll()}
- if(!pollTimer)pollTimer=setInterval(poll,20000);
+ }catch(e){on=false;fl=true;stat();if(!pollTimer)pollTimer=setInterval(poll,60000);poll()}
  setTimeout(function(){if(!on)poll()},2000)}
 function resume(){if(code&&!document.hidden){connect();post();poll()}}
 document.addEventListener("visibilitychange",resume);window.addEventListener("online",resume);
-function stat(){var d=document.getElementById("dot"),e=document.getElementById("stat"),label=postFailed&&out.length?"Sync unavailable · retrying":out.length?"Sending updates…":on?"Live":pollOk?"Connected · checking for updates":fl?"Connection unavailable · retrying":"Connecting";
+function stat(){var d=document.getElementById("dot"),e=document.getElementById("stat"),label=postFailed&&out.length?postError+" · retrying":out.length?"Sending updates…":on?"Live":pollOk?"Connected · checking for updates":fl?"Connection unavailable · retrying":"Connecting";
  if(d)d.className="dot "+((postFailed&&out.length)||fl&&!on&&!pollOk?"bad":on||pollOk?"ok":"");if(e)e.textContent=label}
 function render(){clearTimeout(tm);clearInterval(tm);
  if(!code)return setup();
