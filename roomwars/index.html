@@ -70,7 +70,7 @@ function zc(i){return i==0?0:i==4?3:i==3?2:1}
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}return null}
 function pn(i){return S.names[i]}
 function cn(c){return pn(c*2)+" & "+pn(c*2+1)}
-function link(){return location.href.split("#")[0]+"#"+code}
+function link(){return location.href.split("#")[0]+"#"+code+(S.names?"~"+encodeURIComponent(JSON.stringify(S.names)):"")}
 function I(x,a,b){return typeof x=="number"&&x%1===0&&x>=a&&x<=b}
 function F(x){return typeof x=="number"&&isFinite(x)}
 function strs(a,n){return Array.isArray(a)&&a.length==n&&a.every(function(x){return typeof x=="string"})}
@@ -90,25 +90,54 @@ function apply(m){
  if(view=="home"||view=="wait"||view=="who"||view=="final"||view=="picking")rq()}
 var rt=null,RV=["home","wait","who","final","picking"];
 function rq(){if(rt)return;rt=setTimeout(function(){rt=null;if(RV.indexOf(view)>=0)try{render()}catch(e){}},80)}
+var out=[],posting=false,postRetry=null,pollTimer=null,polling=false,pollOk=false,cursor="",seen={},seenOrder=[],postFailed=false;
+function mark(id){if(!id||seen[id])return false;seen[id]=true;seenOrder.push(id);if(seenOrder.length>500)delete seen[seenOrder.shift()];return true}
+function remember(){try{localStorage.setItem("rwq-"+code,JSON.stringify(out))}catch(e){}}
 function send(m){
- if(!on)apply(m);
- post(m,0)}
-function post(m,n){try{fetch(BASE+"rw-"+code,{method:"POST",body:JSON.stringify(m)}).then(function(r){if(!r.ok)throw 0}).catch(function(){if(n<10)setTimeout(function(){post(m,n+1)},800*(n+1))})}catch(e){}}
+ m.mid=Date.now().toString(36)+Math.random().toString(36).slice(2,9);
+ m.at=Date.now();mark(m.mid);apply(m);
+ out.push(m);remember();stat();post()}
+async function post(){
+ if(posting||!out.length)return;
+ posting=true;var m=out[0],ctrl=new AbortController(),limit=setTimeout(function(){ctrl.abort()},8000);
+ try{var r=await fetch(BASE+"rw-"+code,{method:"POST",body:JSON.stringify(m),signal:ctrl.signal});if(!r.ok)throw Error("HTTP "+r.status);
+  out.shift();remember();postFailed=false;clearTimeout(postRetry);postRetry=null;
+ }catch(e){postFailed=true;clearTimeout(postRetry);postRetry=setTimeout(post,5000)}
+ finally{clearTimeout(limit);posting=false;stat();if(out.length&&!postRetry)post()}}
+function incoming(d){
+ if(!d||d.event!="message")return;
+ if(d.id)cursor=d.id;
+ try{var m=JSON.parse(d.message);if(m.mid&&!mark(m.mid))return;
+  var st=d.time*1000,nw=Date.now();m.at=Math.abs(nw-st)<8000?nw:st;apply(m)
+ }catch(e){}
+}
+async function poll(){if(polling||document.hidden)return;polling=true;
+ var ctrl=new AbortController(),limit=setTimeout(function(){ctrl.abort()},8000);
+ try{var since=cursor||"all",r=await fetch(BASE+"rw-"+code+"/json?poll=1&since="+encodeURIComponent(since),{cache:"no-store",signal:ctrl.signal});
+  if(!r.ok)throw Error("HTTP "+r.status);
+  (await r.text()).trim().split("\n").forEach(function(line){if(line)try{incoming(JSON.parse(line))}catch(e){}});
+  pollOk=true;stat()
+ }catch(e){pollOk=false;fl=true;stat()}
+ finally{clearTimeout(limit);polling=false}}
 function connect(){
  if(es)es.close();
- es=new EventSource(BASE+"rw-"+code+"/sse?since=all");
- es.onopen=function(){on=true;stat()};
- es.onerror=function(){on=false;fl=true;stat()};
- es.addEventListener("message",function(e){try{var d=JSON.parse(e.data);if(d.event=="message")var m=JSON.parse(d.message),st=d.time*1000,nw=Date.now();m.at=Math.abs(nw-st)<8000?nw:st;apply(m)}catch(x){}})}
-function resume(){if(code&&!document.hidden)try{connect()}catch(e){}}
+ try{es=new EventSource(BASE+"rw-"+code+"/sse?since="+encodeURIComponent(cursor||"all"));
+  es.onopen=function(){on=true;fl=false;stat()};
+  es.onerror=function(){on=false;fl=true;stat();poll()};
+  es.addEventListener("message",function(e){try{incoming(JSON.parse(e.data))}catch(x){}})
+ }catch(e){on=false;fl=true;stat();poll()}
+ if(!pollTimer)pollTimer=setInterval(poll,20000);
+ setTimeout(function(){if(!on)poll()},2000)}
+function resume(){if(code&&!document.hidden){connect();post();poll()}}
 document.addEventListener("visibilitychange",resume);window.addEventListener("online",resume);
-function stat(){var d=document.getElementById("dot"),e=document.getElementById("stat");if(d)d.className="dot "+(on?"ok":fl?"bad":"");if(e)e.textContent=on?"Live":fl?"Reconnecting":"Connecting"}
+function stat(){var d=document.getElementById("dot"),e=document.getElementById("stat"),label=postFailed&&out.length?"Sync unavailable · retrying":out.length?"Sending updates…":on?"Live":pollOk?"Connected · checking for updates":fl?"Connection unavailable · retrying":"Connecting";
+ if(d)d.className="dot "+((postFailed&&out.length)||fl&&!on&&!pollOk?"bad":on||pollOk?"ok":"");if(e)e.textContent=label}
 function render(){clearTimeout(tm);clearInterval(tm);
  if(!code)return setup();
  if(!S.names)return wait();
  if(me==null)return who();
  home()}
-function wait(){view="wait";A.innerHTML='<p class="live" id="stat"></p>'+brand("ROOM WARS","trophy")+'<div class="card">Connecting to the game… waiting for the host’s names.</div>';stat()}
+function wait(){view="wait";A.innerHTML='<p class="live" id="stat"></p>'+brand("ROOM WARS","trophy")+'<div class="card">Waiting for the host’s names. Ask the host to share the invite link again if this takes more than a few seconds.<button id="retry" class="alt">Retry connection</button></div>';stat();document.getElementById("retry").onclick=resume}
 function setup(){view="setup";
  var h=''+brand("ROOM WARS","trophy")+'<p class="sub">'+(code?'Edit the names.':'Host: enter the 5 pairs. Then share the invite link with everyone.')+'</p>';
  for(var c=0;c<5;c++)h+='<div class="card"><b>Pair '+(c+1)+'</b><div class="row"><input id="p'+(c*2)+'" placeholder="Person A" maxlength="14" value="'+(S.names?esc(S.names[c*2]):"")+'"><input id="p'+(c*2+1)+'" placeholder="Person B" maxlength="14" value="'+(S.names?esc(S.names[c*2+1]):"")+'"></div></div>';
@@ -276,7 +305,10 @@ function stopG(g){
  var c=document.getElementById("c");
  tm=setInterval(function(){var s=(Date.now()-t0)/1000;if(s>=2)c.textContent="?";else c.textContent=s.toFixed(2)},30);
  var d=false;document.getElementById("ar").onpointerdown=function(e){e.preventDefault();if(d)return;d=true;clearInterval(tm);var v=Math.abs((Date.now()-t0)/1000-10),ar=document.getElementById("ar");c.textContent="LOCKED";ani(ar,"glow");ani(c,"pop");tm=setTimeout(function(){fin(g,v)},400)}}
-code=location.hash.slice(1).replace(/[^a-z0-9]/gi,"").toLowerCase();
-if(code){host=ls("rwh-"+code)=="1";var m=ls("rwm-"+code);me=m===null?null:+m;try{connect()}catch(e){}}
+var parts=location.hash.slice(1).split("~");code=(parts[0]||"").replace(/[^a-z0-9]/gi,"").toLowerCase();
+if(code){host=ls("rwh-"+code)=="1";var m=ls("rwm-"+code);me=m===null?null:+m;
+ if(parts[1])try{var names=JSON.parse(decodeURIComponent(parts[1]));if(strs(names,10))S.names=names.map(function(x){return x.slice(0,20)})}catch(e){}
+ try{var saved=JSON.parse(ls("rwq-"+code)||"[]");if(Array.isArray(saved)){out=saved.filter(function(x){return x&&typeof x.t=="string"});out.forEach(function(x){mark(x.mid);apply(x)})}}catch(e){}
+ connect();post()}
 render();
 </script></body></html>
