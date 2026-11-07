@@ -36,13 +36,15 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--g)}textarea
 .game .gt{display:flex;align-items:center;gap:12px}.gt>div{flex:1}.gi{width:36px;height:36px;flex:none}.gl{font-size:11px;letter-spacing:.2em;color:var(--m)}.gn{font-size:18px;color:var(--l)}
 .dot{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:10px;width:12px;height:12px;background:#555;z-index:5}.dot.ok{background:#5ad17a}.dot.bad{background:#e5484d}
 .sp{display:block;margin:0 auto}
+.brand .sp rect:nth-child(3n){animation:trophy-glint 1.6s steps(2) infinite alternate}
+@keyframes trophy-glint{to{fill:#fff4be}}
 .cf{position:fixed;top:-20px;width:8px;height:8px;animation:fall linear infinite;pointer-events:none;z-index:5}
 @keyframes fall{to{transform:translateY(110vh)}}
 @keyframes pop{50%{transform:scale(1.25)}}@keyframes shake{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
 @keyframes glow{from{box-shadow:0 0 0 0 var(--l),6px 6px 0 var(--d)}to{box-shadow:0 0 0 16px transparent,6px 6px 0 var(--d)}}
 @keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}@keyframes bob{50%{transform:translateY(-6px)}}
 .pop{animation:pop .2s steps(2)}.shake{animation:shake .4s steps(4)}.glow{animation:glow .6s steps(5)}.rise{animation:rise .4s steps(4)}.bob{animation:bob 1s steps(2) infinite}
-@media(prefers-reduced-motion:reduce){.pop,.shake,.glow,.rise,.bob{animation:none}.cf{display:none}}
+@media(prefers-reduced-motion:reduce){.pop,.shake,.glow,.rise,.bob,.brand .sp rect:nth-child(3n){animation:none}.cf{display:none}}
 </style></head><body>
 <i id="dot" class="dot"></i>
 <div id="app"></div>
