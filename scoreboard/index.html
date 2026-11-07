@@ -11,6 +11,7 @@ button.on,button.go{border-color:var(--g);color:var(--l)}
 button.go{background:#2a2108}
 input{font:inherit;background:#111;color:var(--t);border:3px solid var(--d);padding:8px;width:100%}
 .dot{position:fixed;top:10px;right:10px;width:12px;height:12px;background:#555;z-index:5}.dot.ok{background:#5ad17a}.dot.bad{background:#e5484d}
+#sync{position:fixed;top:7px;right:27px;z-index:5;font:12px/18px system-ui,sans-serif;color:#ddd;background:#111b;padding:1px 6px;border-radius:3px}
 body.tv #H,body:not(.tv) #T{display:none}
 /* chooser */
 body.landing #H{max-width:none;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px}
@@ -130,6 +131,7 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--g)}
 @keyframes fall{to{transform:translateY(106vh)}}
 </style></head><body>
 <i id="dot" class="dot"></i>
+<span id="sync" role="status" aria-live="polite"></span>
 <div id="H"></div>
 <div id="T"><div id="msg"></div><div id="bd"><h1 id="th"></h1><div id="ban"></div><div id="rows"></div><div id="lg">1-6 SAFE · 7-9 NEXT YEAR'S ORGANISERS · 10 THE JIALAT TROPHY</div></div></div>
 <script>
@@ -232,11 +234,46 @@ const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({
 const rn=i=>S.nm[i]||'P'+(i+1),nm=i=>esc(rn(i));
 const ROLE=(location.hash.match(/host|tv/)||[''])[0];
 const save=()=>{try{localStorage.setItem('jialat26',JSON.stringify(S))}catch(e){}};
-const dot=ok=>{$('dot').className='dot '+(ok?'ok':'bad')};
-let pt;function push(){clearTimeout(pt);pt=setTimeout(()=>{fetch(URL_,{method:'POST',body:JSON.stringify(S)}).then(r=>dot(r.ok)).catch(()=>dot(0))},250)}
-function commit(){S.v=Date.now();save();render();push()}
-function conn(){try{const e=new EventSource(URL_+'/sse?since=latest');e.onopen=()=>dot(1);e.onerror=()=>dot(0);
-e.onmessage=ev=>{try{const j=JSON.parse(ev.data);if(j.event!=='message')return;const x=JSON.parse(j.message);if(x&&x.v>S.v){S=Object.assign(D(),x);save();render()}}catch(_){}}}catch(_){dot(0)}}
+const status=(kind,label)=>{$('dot').className='dot '+kind;$('sync').textContent=label};
+let pt,retryTimer=null,sending=false,queued=null,stream=null,pollTimer=null,streamOpen=false,polling=false;
+const pendingKey='jialat26-pending';
+function pending(body){try{if(body)localStorage.setItem(pendingKey,body);else localStorage.removeItem(pendingKey)}catch(e){}}
+function push(){queued=JSON.stringify(S);pending(queued);status('','Sending…');clearTimeout(pt);pt=setTimeout(sendLatest,250)}
+async function sendLatest(){
+ if(sending||!queued)return;
+ sending=true;const body=queued;queued=null;
+ const ctrl=new AbortController(),limit=setTimeout(()=>ctrl.abort(),8000);
+ try{const r=await fetch(URL_,{method:'POST',body,signal:ctrl.signal});if(!r.ok)throw Error('HTTP '+r.status);
+  clearTimeout(retryTimer);retryTimer=null;
+  if(!queued){pending(null);status('ok','Update sent')}
+ }catch(e){if(!queued)queued=body;pending(queued);status('bad','Sync unavailable · retrying');
+  clearTimeout(retryTimer);retryTimer=setTimeout(sendLatest,5000);
+ }finally{clearTimeout(limit);sending=false;if(queued&&!retryTimer){clearTimeout(pt);pt=setTimeout(sendLatest,250)}}
+}
+function commit(){S.v=Math.max(Date.now(),S.v+1);save();render();push()}
+function receive(j){try{if(j.event!=='message')return;const x=JSON.parse(j.message);
+ if(x&&typeof x.v==='number'&&x.v>S.v){S=Object.assign(D(),x);save();render()}
+}catch(e){}}
+async function poll(){if(polling||document.hidden)return;polling=true;
+ try{const ctrl=new AbortController(),limit=setTimeout(()=>ctrl.abort(),8000);let r;
+  try{r=await fetch(URL_+'/json?poll=1&since=latest',{cache:'no-store',signal:ctrl.signal})}finally{clearTimeout(limit)}
+  if(!r.ok)throw Error('HTTP '+r.status);
+  (await r.text()).trim().split('\n').forEach(line=>{if(line)try{receive(JSON.parse(line))}catch(e){}});
+  if(!streamOpen)status('ok','Connected · checking for updates');
+ }catch(e){if(!streamOpen)status('bad','Connection unavailable · retrying')}
+ finally{polling=false}}
+function conn(){if(ROLE==='host'){status('','Ready to sync');if(!navigator.onLine)status('bad','Offline · retrying');return}
+ status('','Connecting…');
+ try{stream=new EventSource(URL_+'/sse?since=latest');
+  stream.onopen=()=>{streamOpen=true;status('ok','Live')};
+  stream.onerror=()=>{streamOpen=false;status('bad','Reconnecting · checking for updates');poll()};
+  stream.onmessage=ev=>{try{receive(JSON.parse(ev.data))}catch(e){}};
+ }catch(e){status('bad','Connection unavailable · retrying')}
+ if(!pollTimer)pollTimer=setInterval(poll,20000);
+ poll();
+}
+window.addEventListener('online',()=>{if(ROLE==='host')sendLatest();else if(ROLE==='tv')poll()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(ROLE==='host')sendLatest();else if(ROLE==='tv'){if(stream)stream.close();clearInterval(pollTimer);pollTimer=null;conn()}});
 function stand(n){const t=S.sc.map((r,i)=>({i,t:r.slice(0,n).reduce((a,v)=>a+(v||0),0),b:S.tb[i]||0}));t.sort((a,b)=>b.t-a.t||b.b-a.b||a.i-b.i);t.forEach((o,k)=>o.r=k+1);return t}
 const allDone=()=>S.sc.every(r=>r.every(v=>v!=null));
 const unresolvedTie=()=>{const st=stand(9);return st.some((o,i)=>i>0&&o.t===st[i-1].t&&o.b===st[i-1].b)};
@@ -429,4 +466,5 @@ function render(){document.body.className=ROLE||'landing';if(ROLE=='host')host()
 </svg><h1>SCOREBOARD</h1><div class="rw"><button class="go" onclick="location.hash='host';location.reload()">iPad · Host</button><button class="go" onclick="location.hash='tv';location.reload()">MacBook · TV</button></div></div>`}
 if(ROLE=='tv'){mkRows();$('T').ondblclick=()=>document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}
 render();if(ROLE)conn();
+if(ROLE==='host')try{queued=localStorage.getItem(pendingKey);if(queued){status('','Sending saved update…');sendLatest()}}catch(e){}
 </script></body></html>
